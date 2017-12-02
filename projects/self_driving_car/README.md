@@ -1,4 +1,4 @@
-Work related to learning steer using deep learning working with [Udacity drive
+Work related to learning to steer using deep learning working with [Udacity drive
 data](https://github.com/udacity/self-driving-car/tree/master/datasets/CH2).
 Transformation from rosbag to csv data done using scripts created by [Ross Wightman](https://github.com/rwightman/udacity-driving-reader)
 
