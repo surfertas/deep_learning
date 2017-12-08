@@ -3,6 +3,11 @@ import tensorflow as tf
 import numpy as np
 from config import config
 
+# TODO:
+# 1. Implement def evaluation() to evaluate on test inputs.
+# 2. Implement visualization portion.
+# 3. Convert image from RGB to YSV
+
 
 class PilotNet(object):
 
@@ -49,7 +54,15 @@ class PilotNet(object):
         tf.summary.scalar("loss", self._loss)
         self._all_summaries = tf.summary.merge_all()
 
-    def train(self, file_path):
+    def _prepare_data(self, file_path):
+        dataset = input_fn(file_path)
+        dataset = dataset.batch(self._batch_size)
+        print("Data loaded: {}".format(file_path))
+        batch_generator = dataset.make_initializable_iterator()
+        next_element = batch_generator.get_next()
+        return next_element, batch_generator
+
+    def train(self, train_file_path, valid_file_path):
         self._train_admin_setup()
         tf.global_variables_initializer().run()
 
@@ -59,19 +72,17 @@ class PilotNet(object):
             print("Restoring from: {}".format(ckpt))
             self._saver.restore(self._sess, ckpt.model_checkpoint_path)
 
-        # Train
-        dataset = input_fn(file_path)
-        dataset = dataset.batch(self._batch_size)
-        print("Data loaded...")
-        batch_generator = dataset.make_initializable_iterator()
-        next_element = batch_generator.get_next()
+        # Prepare train and valididation data
+        train_next, train_gen = self._prepare_data(train_file_path)
+        valid_next, valid_gen = self._prepare_data(valid_file_path)
+        best_valid_loss = None
 
         for epoch in range(self._n_epochs):
-            self._sess.run(batch_generator.initializer)
+            self._sess.run(train_gen.initializer)
             epoch_loss = []
             while True:
                 try:
-                    img_batch, label_batch = self._sess.run(next_element)
+                    img_batch, label_batch = self._sess.run(train_next)
                     loss, _ = self._sess.run([self._loss, self._train],
                                              feed_dict={
                         self._inputs: img_batch['image'],
@@ -81,15 +92,37 @@ class PilotNet(object):
                 except tf.errors.OutOfRangeError:
                     break
 
+            # Validation after each epoch
+            self._sess.run(valid_gen.initializer)
+            valid_loss = []
+            while True:
+                try:
+                    img_batch, label_batch = self._sess.run(valid_next)
+                    loss = self._sess.run([self._loss],
+                                          feed_dict={
+                        self._inputs: img_batch['image'],
+                        self._targets: label_batch}
+                    )
+                    valid_loss.append(loss)
+                except tf.errors.OutOfRangeError:
+                    break
+
             # Add summary and save checkpoint after every epoch
             s = self._sess.run(self._all_summaries, feed_dict={
                 self._inputs: img_batch['image'],
                 self._targets: label_batch}
             )
             self._train_writer.add_summary(s, global_step=epoch)
-            print("Epoch: {} Loss: {} Data Count: {}".format(epoch, np.mean(epoch_loss), len(epoch_loss)))
-            if epoch % 5 == 0:
+            valid_loss = np.mean(valid_loss)
+            print("Epoch: {} Train Loss: {} Valid Loss: {}".format(
+                epoch, np.mean(epoch_loss), valid_loss)
+            )
+
+            if best_valid_loss == None:
+                best_valid_loss = valid_loss
+            elif valid_loss < best_valid_loss:
                 self._saver.save(self._sess, self._ckpt_dir, global_step=self._global_step)
+                best_valid_loss = valid_loss
 
         # Need to closer writers
         self._train_writer.close()
@@ -127,11 +160,13 @@ def input_fn(file_path):
 
 if __name__ == "__main__":
     home = config['bag4']
-    file_path = home + "interpolated.csv"
+    train_file_path = home + "train_interpolated.csv"
+    valid_file_path = home + "valid_interpolated.csv"
+
     tf.reset_default_graph()
 
     # Want to see what devices are being used.
     # with tf.Session(config=tf.ConfigProto(log_device_placement=True)) as sess:
     with tf.Session() as sess:
         model = PilotNet(sess, 'pilot_net', 'checkpoints/pilot_net', 10, 32)
-        model.train(file_path)
+        model.train(train_file_path, valid_file_path)
