@@ -1,12 +1,22 @@
+#!/usr/bin/env python
+# Model specification and training, validation pipeline to train PilotNet, an
+# Nvidia designed model for predicting steering angles from a single front
+# facing camera on a car in motion.
+
 import os
 import tensorflow as tf
 import numpy as np
 from config import config
 
+
+# custom library
+from viewer import *
+
 # TODO:
-# 1. Implement def evaluation() to evaluate on test inputs.
-# 2. Implement visualization portion.
-# 3. Convert image from RGB to YSV
+# 1. include add_to_collections if we want to use model for inference. 
+# 2. Implement def evaluation() to evaluate on test inputs.
+# 3. Implement visualization portion.
+# 4. Convert image from RGB to YSV
 
 
 class PilotNet(object):
@@ -20,6 +30,7 @@ class PilotNet(object):
         self._build_graph()
 
     def _model(self, x):
+        """ Model specification of PilotNet. """
         assert(x[0].shape == (480, 640, 3))
         out = tf.layers.batch_normalization(x)
         out = tf.layers.conv2d(x, 24, [5, 5], (2, 2), "valid", activation=tf.nn.relu)
@@ -35,6 +46,7 @@ class PilotNet(object):
         return out
 
     def _build_graph(self):
+        """ Build graph and define placeholders and variables. """
         self._inputs = tf.placeholder("float", [None, 480, 640, 3])
         self._targets = tf.placeholder("float", [None, 1])
         self._global_step = tf.Variable(0, dtype=tf.int32, trainable=False, name='global_step')
@@ -44,6 +56,7 @@ class PilotNet(object):
         self._train = tf.train.AdamOptimizer().minimize(self._loss, global_step=self._global_step)
 
     def _train_admin_setup(self):
+        """ Setup writers, savers, and summary ops. """
         # Writers
         self._train_writer = tf.summary.FileWriter(self._log_dir + '/train', self._sess.graph)
 
@@ -54,15 +67,23 @@ class PilotNet(object):
         tf.summary.scalar("loss", self._loss)
         self._all_summaries = tf.summary.merge_all()
 
-    def _prepare_data(self, file_path):
+    def _prepare_data(self, file_path, test=False):
+        """ Create data iterator """
         dataset = input_fn(file_path)
-        dataset = dataset.batch(self._batch_size)
+        batch_size = 1 if test else self._batch_size
+        dataset = dataset.batch(batch_size)
         print("Data loaded: {}".format(file_path))
         batch_generator = dataset.make_initializable_iterator()
         next_element = batch_generator.get_next()
         return next_element, batch_generator
 
+    def _generate_collections(self):
+        """ Specificy collections so model can be reloaded later. """
+        tf.add_collections("inputs", self._inputs)
+        tf.add_collections("predict", self._predict)
+
     def train(self, train_file_path, valid_file_path):
+        """ Train and validate. """
         self._train_admin_setup()
         tf.global_variables_initializer().run()
 
@@ -106,7 +127,6 @@ class PilotNet(object):
                     valid_loss.append(loss)
                 except tf.errors.OutOfRangeError:
                     break
-
             # Add summary and save checkpoint after every epoch
             s = self._sess.run(self._all_summaries, feed_dict={
                 self._inputs: img_batch['image'],
@@ -118,6 +138,9 @@ class PilotNet(object):
                 epoch, np.mean(epoch_loss), valid_loss)
             )
 
+            # Use validation data set for now for prototyping
+            self.evaluate(valid_file_path)
+
             if best_valid_loss == None:
                 best_valid_loss = valid_loss
             elif valid_loss < best_valid_loss:
@@ -127,11 +150,14 @@ class PilotNet(object):
         # Need to closer writers
         self._train_writer.close()
 
-    def evaluate(self):
-        pass
+    def evaluate(self, test_file_path):
+        pass 
 
 
 def input_fn(file_path):
+    """ Generic input function used for creating dataset iterator """
+    # Customized for the Udacity train data processed by scripts to convert from
+    # rosbags to csv files.
     def _decode_csv(line):
         # tf.decode_csv needs a record_default as 2nd parameter
         data = tf.decode_csv(line, list(np.array([""] * 12).reshape(12, 1)))[-8:-5]
