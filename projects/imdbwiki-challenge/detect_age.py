@@ -35,7 +35,6 @@ def main():
                         help='Preprocess whitening')
     args = parser.parse_args()
 
-
     train, test, age_stats = get_data(args.file_name, simple=True, white=args.white, split=0.3)
     print("Age distribution of data is : {}".format(age_stats))
 
@@ -44,7 +43,7 @@ def main():
                                                  repeat=False, shuffle=False)
 
     model = L.Classifier(CNN(4))
-	
+
     if args.gpu >= 0:
         chainer.cuda.get_device(args.gpu).use()
         model.to_gpu()
@@ -76,10 +75,10 @@ def main():
             extensions.PlotReport(
                 ['main/loss', 'validation/main/loss'],
                 'epoch', file_name='loss.png'))
-        	trainer.extend(
+            trainer.extend(
                 extensions.PlotReport(
-                ['main/accuracy', 'validation/main/accuracy'],
-                'epoch', file_name='accuracy.png'))
+                    ['main/accuracy', 'validation/main/accuracy'],
+                    'epoch', file_name='accuracy.png'))
 
     # Run trainer
     trainer.run()
