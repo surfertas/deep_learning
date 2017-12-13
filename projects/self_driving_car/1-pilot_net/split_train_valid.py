@@ -1,7 +1,12 @@
 #!/usr/bin/env python
+# Script to split a given csv file into separate csv files for training and
+# validation.
+# 
+# Note: You can set the defaults for original path and file name. Default for
+# validation is set at 10% allocated to validation.
+
 import argparse
 import os
-
 
 def main(args):
     with open(os.path.join(
