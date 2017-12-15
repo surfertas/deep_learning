@@ -13,7 +13,7 @@ from config import config
 # from viewer import *
 
 # TODO:
-# 1. include add_to_collections if we want to use model for inference.
+# 1. include add_to_collections if we want to use model for inference. 
 # 2. Implement def evaluation() to evaluate on test inputs.
 # 3. Implement visualization portion.
 # 4. Convert image from RGB to YSV
@@ -162,9 +162,10 @@ class PilotNet(object):
             try:
                 img, steer_label = self._sess.run(next_element)
                 steer_pred = self._sess.run([self._predict],
-                                feed_dict={self._inputs: img['image']}
+                    feed_dict={self._inputs: img['image']}
                 )
-                images.append(img)
+		# Store image path as raw image too large.
+                images.append(img['image_path'])
                 steer_labels.append(steer_label)
                 steer_preds.append(steer_pred)
             except tf.errors.OutOfRangeError:
@@ -175,9 +176,12 @@ class PilotNet(object):
             "steer_label": steer_labels,
             "steer_pred": steer_preds
         }
+
         with open("predictions.pickle", 'w') as f:
             pickle.dump(data, f)
             print("Predictions pickled...")
+        
+
 
 
 def input_fn(file_path):
@@ -194,9 +198,8 @@ def input_fn(file_path):
         img_decoded = -1.0 + 2.0 * img_decoded / 255.0
         steer_angle = tf.string_to_number(data[2], tf.float32)
 
-        # return camera as well to confirm location of camera
-        # e.g left_camera, center_camera, right_camera...we want center_camera
-        return {'image': img_decoded, 'camera': data[0]}, [steer_angle]
+        # return image and image path
+        return {'image': img_decoded, 'image_path': data[1]}, [steer_angle]
 
     # skip() header row,
     # filter() for center camera,
@@ -222,4 +225,4 @@ if __name__ == "__main__":
     with tf.Session() as sess:
         model = PilotNet(sess, 'pilot_net', 'checkpoints/pilot_net', 1, 32)
         model.train(train_file_path, valid_file_path)
-        model.predict(valid_file_path)
+	model.predict(valid_file_path)
