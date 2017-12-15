@@ -67,10 +67,10 @@ class PilotNet(object):
         tf.summary.scalar("loss", self._loss)
         self._all_summaries = tf.summary.merge_all()
 
-    def _prepare_data(self, file_path, test=False):
+    def _prepare_data(self, file_path, train=True):
         """ Create data iterator """
         dataset = input_fn(file_path)
-        batch_size = 1 if test else self._batch_size
+        batch_size = 1 if train else self._batch_size
         dataset = dataset.batch(batch_size)
         print("Data loaded: {}".format(file_path))
         batch_generator = dataset.make_initializable_iterator()
@@ -138,9 +138,6 @@ class PilotNet(object):
                 epoch, np.mean(epoch_loss), valid_loss)
             )
 
-            # Use validation data set for now for prototyping
-            self.evaluate(valid_file_path)
-
             if best_valid_loss == None:
                 best_valid_loss = valid_loss
             elif valid_loss < best_valid_loss:
@@ -150,8 +147,40 @@ class PilotNet(object):
         # Need to closer writers
         self._train_writer.close()
 
-    def evaluate(self, test_file_path):
-        pass 
+    def predict(self, file_path):
+        # This is customized for this particular pipeline. Predict takes in path
+        # to csv file with img path information, predicts, and dumps steering
+        # prediction, ground_truth, and img to pickle file.
+        import pickle
+        next_element, generator = self._prepare_data(file_path, train=False)
+        self._sess.run(generator.initializer)
+
+        images = []
+        steer_labels = []
+        steer_pred = []
+        while True:
+            try:
+                img, steer_label = self._sess.run(next_element)
+                steer_pred = self._sess.run([self._predict],
+                    feed_dict={self._inputs: img['image']}
+                )
+                images.append(img)
+                steer_labels.append(steer_label)
+                steer_preds.append(steer_pred)
+            except tf.errors.OutOfRangeError:
+                break
+
+        data = {
+            "image": images,
+            "steer_label": steer_labels,
+            "steer_pred": steer_preds
+        }
+
+        with open("predictions.pickle", 'w') as f:
+            pickle.dump(data, f)
+            print("Predictions pickled...")
+        
+
 
 
 def input_fn(file_path):
