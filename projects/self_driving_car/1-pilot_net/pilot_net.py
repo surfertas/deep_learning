@@ -10,10 +10,10 @@ from config import config
 
 
 # custom library
-from viewer import *
+# from viewer import *
 
 # TODO:
-# 1. include add_to_collections if we want to use model for inference. 
+# 1. include add_to_collections if we want to use model for inference.
 # 2. Implement def evaluation() to evaluate on test inputs.
 # 3. Implement visualization portion.
 # 4. Convert image from RGB to YSV
@@ -157,12 +157,12 @@ class PilotNet(object):
 
         images = []
         steer_labels = []
-        steer_pred = []
+        steer_preds = []
         while True:
             try:
                 img, steer_label = self._sess.run(next_element)
                 steer_pred = self._sess.run([self._predict],
-                    feed_dict={self._inputs: img['image']}
+                                feed_dict={self._inputs: img['image']}
                 )
                 images.append(img)
                 steer_labels.append(steer_label)
@@ -175,12 +175,9 @@ class PilotNet(object):
             "steer_label": steer_labels,
             "steer_pred": steer_preds
         }
-
         with open("predictions.pickle", 'w') as f:
             pickle.dump(data, f)
             print("Predictions pickled...")
-        
-
 
 
 def input_fn(file_path):
@@ -223,5 +220,6 @@ if __name__ == "__main__":
     # Want to see what devices are being used.
     # with tf.Session(config=tf.ConfigProto(log_device_placement=True)) as sess:
     with tf.Session() as sess:
-        model = PilotNet(sess, 'pilot_net', 'checkpoints/pilot_net', 10, 32)
+        model = PilotNet(sess, 'pilot_net', 'checkpoints/pilot_net', 1, 32)
         model.train(train_file_path, valid_file_path)
+        model.predict(valid_file_path)
