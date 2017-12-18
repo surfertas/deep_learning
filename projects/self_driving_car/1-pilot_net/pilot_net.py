@@ -12,9 +12,13 @@ from config import config
 # custom library
 # from viewer import *
 
+# https://arxiv.org/pdf/1704.07911.pdf
+# https://arxiv.org/pdf/1708.03798.pdf
+# data: https://github.com/udacity/self-driving-car/tree/master/datasets/CH2
+# scripts to convert rosbags to csv:
+# https://github.com/rwightman/udacity-driving-reader
+
 # TODO:
-# 1. include add_to_collections if we want to use model for inference. 
-# 2. Implement def evaluation() to evaluate on test inputs.
 # 3. Implement visualization portion.
 # 4. Convert image from RGB to YSV
 
