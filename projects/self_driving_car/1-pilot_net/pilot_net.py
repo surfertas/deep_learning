@@ -199,8 +199,20 @@ def input_fn(file_path):
         img_decoded = tf.to_float(tf.image.decode_image(tf.read_file(img_path)))
 
         # normalize between (-1,1)
-        img_decoded = -1.0 + 2.0 * img_decoded / 255.0
+        #x = -1.0 + 2.0 * img_decoded / 255.0
+        x = tf.image.per_image_standardization(img_decoded)
+        x = tf.image.random_brightness(x,0.5)
+        x = tf.image.random_contrast(x,0.1,0.8)
+        # Handle overflow
+        x = tf.minimum(x, 1.0)
+        x = tf.maximum(x, 0.0)        
+        
         steer_angle = tf.string_to_number(data[2], tf.float32)
+
+        flip = np.random.randint(2)
+        if flip:
+            x = tf.image.flip_left_right(x)
+            steer_angle *= -1
 
         # return image and image path
         return {'image': img_decoded, 'image_path': data[1]}, [steer_angle]
