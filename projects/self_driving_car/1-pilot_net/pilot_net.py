@@ -36,7 +36,6 @@ class PilotNet(object):
     def _model(self, x):
         """ Model specification of PilotNet. """
         assert(x[0].shape == (480, 640, 3))
-        out = tf.layers.batch_normalization(x)
         out = tf.layers.conv2d(x, 24, [5, 5], (2, 2), "valid", activation=tf.nn.relu)
         out = tf.layers.conv2d(out, 36, [5, 5], (2, 2), "valid", activation=tf.nn.relu)
         out = tf.layers.conv2d(out, 48, [5, 5], (2, 2), "valid", activation=tf.nn.relu)
@@ -73,8 +72,8 @@ class PilotNet(object):
 
     def _prepare_data(self, file_path, train=True):
         """ Create data iterator """
-        dataset = input_fn(file_path)
-        batch_size = 1 if train else self._batch_size
+        dataset = input_fn(file_path, train)
+        batch_size = 1 if not train else self._batch_size
         dataset = dataset.batch(batch_size)
         print("Data loaded: {}".format(file_path))
         batch_generator = dataset.make_initializable_iterator()
@@ -137,9 +136,8 @@ class PilotNet(object):
                 self._targets: label_batch}
             )
             self._train_writer.add_summary(s, global_step=epoch)
-            valid_loss = np.mean(valid_loss)
             print("Epoch: {} Train Loss: {} Valid Loss: {}".format(
-                epoch, np.mean(epoch_loss), valid_loss)
+                epoch, np.mean(epoch_loss), np.mean(valid_loss))
             )
 
             if best_valid_loss == None:
@@ -166,9 +164,9 @@ class PilotNet(object):
             try:
                 img, steer_label = self._sess.run(next_element)
                 steer_pred = self._sess.run([self._predict],
-                    feed_dict={self._inputs: img['image']}
-                )
-		# Store image path as raw image too large.
+                                            feed_dict={self._inputs: img['image']}
+                                            )
+                # Store image path as raw image too large.
                 images.append(img['image_path'])
                 steer_labels.append(steer_label)
                 steer_preds.append(steer_pred)
@@ -184,11 +182,9 @@ class PilotNet(object):
         with open("predictions.pickle", 'w') as f:
             pickle.dump(data, f)
             print("Predictions pickled...")
-        
 
 
-
-def input_fn(file_path):
+def input_fn(file_path, train=True):
     """ Generic input function used for creating dataset iterator """
     # Customized for the Udacity train data processed by scripts to convert from
     # rosbags to csv files.
@@ -197,25 +193,28 @@ def input_fn(file_path):
         data = tf.decode_csv(line, list(np.array([""] * 12).reshape(12, 1)))[-8:-5]
         img_path = home + data[1]
         img_decoded = tf.to_float(tf.image.decode_image(tf.read_file(img_path)))
+        x = img_decoded / 255.0
 
-        # normalize between (-1,1)
-        #x = -1.0 + 2.0 * img_decoded / 255.0
-        x = tf.image.per_image_standardization(img_decoded)
-        x = tf.image.random_brightness(x,0.5)
-        x = tf.image.random_contrast(x,0.1,0.8)
-        # Handle overflow
-        x = tf.minimum(x, 1.0)
-        x = tf.maximum(x, 0.0)        
-        
         steer_angle = tf.string_to_number(data[2], tf.float32)
 
-        flip = np.random.randint(2)
-        if flip:
-            x = tf.image.flip_left_right(x)
-            steer_angle *= -1
+        if train:
+            # https://github.com/tensorflow/models/blob/master/research/slim/preprocessing/inception_preprocessing.py
+            x = tf.image.random_brightness(x, max_delta=32. / 255.)
+            x = tf.image.random_saturation(x, lower=0.5, upper=1.5)
+            x = tf.image.random_hue(x, max_delta=0.2)
+            x = tf.image.random_contrast(x, lower=0.5, upper=1.5)
+            x = tf.clip_by_value(x, 0.0, 1.0)
 
+            flip = np.random.randint(2)
+            if flip:
+                x = tf.image.flip_left_right(x)
+                steer_angle *= -1
+
+        # normalize between (-1,1)
+        x = tf.subtract(x, 0.5)
+        x = tf.multiply(x, 2.0)
         # return image and image path
-        return {'image': img_decoded, 'image_path': data[1]}, [steer_angle]
+        return {'image': x, 'image_path': data[1]}, [steer_angle]
 
     # skip() header row,
     # filter() for center camera,
@@ -232,6 +231,7 @@ def input_fn(file_path):
 if __name__ == "__main__":
     home = config['bag4']
     train_file_path = home + "train_interpolated.csv"
+    print(train_file_path)
     valid_file_path = home + "valid_interpolated.csv"
 
     tf.reset_default_graph()
@@ -239,6 +239,6 @@ if __name__ == "__main__":
     # Want to see what devices are being used.
     # with tf.Session(config=tf.ConfigProto(log_device_placement=True)) as sess:
     with tf.Session() as sess:
-        model = PilotNet(sess, 'pilot_net', 'checkpoints/pilot_net', 1, 32)
+        model = PilotNet(sess, 'pilot_net', 'checkpoints/pilot_net', n_epochs=20, batch_size=128)
         model.train(train_file_path, valid_file_path)
-	model.predict(valid_file_path)
+        model.predict(valid_file_path)
