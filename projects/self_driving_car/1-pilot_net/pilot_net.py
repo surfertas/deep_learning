@@ -25,23 +25,24 @@ from config import config
 
 class PilotNet(object):
 
-    def __init__(self, sess, log_dir, ckpt_dir, n_epochs, batch_size):
+    def __init__(self, sess, log_dir, ckpt_dir, input_dim, n_epochs, batch_size):
         self._sess = sess
         self._log_dir = log_dir
         self._ckpt_dir = ckpt_dir
+        self._img_h, self._img_w, self._img_c = input_dim
         self._n_epochs = n_epochs
         self._batch_size = batch_size
         self._build_graph()
 
     def _model(self, x):
         """ Model specification of PilotNet. """
-        assert(x[0].shape == (480, 640, 3))
+        assert(x[0].shape == (self._img_h, self._img_w, self._img_c))
         out = tf.layers.conv2d(x, 24, [5, 5], (2, 2), "valid", activation=tf.nn.relu)
         out = tf.layers.conv2d(out, 36, [5, 5], (2, 2), "valid", activation=tf.nn.relu)
         out = tf.layers.conv2d(out, 48, [5, 5], (2, 2), "valid", activation=tf.nn.relu)
         out = tf.layers.conv2d(out, 64, [3, 3], (1, 1), "valid", activation=tf.nn.relu)
         out = tf.layers.conv2d(out, 64, [3, 3], (1, 1), "valid", activation=tf.nn.relu)
-        out = tf.reshape(out, [-1, 64 * 53 * 73])
+        out = tf.reshape(out, [-1, 64 * 18 * 73])
         out = tf.layers.dense(out, 100, tf.nn.relu)
         out = tf.layers.dense(out, 50, tf.nn.relu)
         out = tf.layers.dense(out, 10, tf.nn.relu)
@@ -50,7 +51,7 @@ class PilotNet(object):
 
     def _build_graph(self):
         """ Build graph and define placeholders and variables. """
-        self._inputs = tf.placeholder("float", [None, 480, 640, 3])
+        self._inputs = tf.placeholder("float", [None, self._img_h, self._img_w, self._img_c])
         self._targets = tf.placeholder("float", [None, 1])
         self._global_step = tf.Variable(0, dtype=tf.int32, trainable=False, name='global_step')
 
@@ -164,9 +165,9 @@ class PilotNet(object):
             try:
                 img, steer_label = self._sess.run(next_element)
                 steer_pred = self._sess.run([self._predict],
-                                            feed_dict={self._inputs: img['image']}
-                                            )
-                # Store image path as raw image too large.
+                    feed_dict={self._inputs: img['image']}
+                )
+		# Store image path as raw image too large.
                 images.append(img['image_path'])
                 steer_labels.append(steer_label)
                 steer_preds.append(steer_pred)
@@ -182,6 +183,8 @@ class PilotNet(object):
         with open("predictions.pickle", 'w') as f:
             pickle.dump(data, f)
             print("Predictions pickled...")
+        
+
 
 
 def input_fn(file_path, train=True):
@@ -194,7 +197,12 @@ def input_fn(file_path, train=True):
         img_path = home + data[1]
         img_decoded = tf.to_float(tf.image.decode_image(tf.read_file(img_path)))
         x = img_decoded / 255.0
-
+        x.set_shape([480,640,3])
+        x = tf.image.resize_image_with_crop_or_pad(
+            x,
+            200, # Height
+            640, # Width
+        )
         steer_angle = tf.string_to_number(data[2], tf.float32)
 
         if train:
@@ -203,8 +211,8 @@ def input_fn(file_path, train=True):
             x = tf.image.random_saturation(x, lower=0.5, upper=1.5)
             x = tf.image.random_hue(x, max_delta=0.2)
             x = tf.image.random_contrast(x, lower=0.5, upper=1.5)
-            x = tf.clip_by_value(x, 0.0, 1.0)
-
+            x =  tf.clip_by_value(x, 0.0, 1.0)
+    
             flip = np.random.randint(2)
             if flip:
                 x = tf.image.flip_left_right(x)
@@ -212,7 +220,7 @@ def input_fn(file_path, train=True):
 
         # normalize between (-1,1)
         x = tf.subtract(x, 0.5)
-        x = tf.multiply(x, 2.0)
+        x = tf.multiply(x, 2.0)    
         # return image and image path
         return {'image': x, 'image_path': data[1]}, [steer_angle]
 
@@ -239,6 +247,13 @@ if __name__ == "__main__":
     # Want to see what devices are being used.
     # with tf.Session(config=tf.ConfigProto(log_device_placement=True)) as sess:
     with tf.Session() as sess:
-        model = PilotNet(sess, 'pilot_net', 'checkpoints/pilot_net', n_epochs=20, batch_size=128)
+        model = PilotNet(
+            sess,
+            'pilot_net',
+            'checkpoints/pilot_net',
+            input_dim=(200, 640, 3),
+            n_epochs=20,
+            batch_size=128
+        )
         model.train(train_file_path, valid_file_path)
-        model.predict(valid_file_path)
+	model.predict(valid_file_path)
