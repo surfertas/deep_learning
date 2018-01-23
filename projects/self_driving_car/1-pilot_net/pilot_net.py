@@ -11,6 +11,7 @@ from config import config
 
 # custom library
 # from viewer import *
+from data_pipeline import *
 
 # https://arxiv.org/pdf/1704.07911.pdf
 # https://arxiv.org/pdf/1708.03798.pdf
@@ -71,22 +72,12 @@ class PilotNet(object):
         tf.summary.scalar("loss", self._loss)
         self._all_summaries = tf.summary.merge_all()
 
-    def _prepare_data(self, file_path, train=True):
-        """ Create data iterator """
-        dataset = input_fn(file_path, train)
-        batch_size = 1 if not train else self._batch_size
-        dataset = dataset.batch(batch_size)
-        print("Data loaded: {}".format(file_path))
-        batch_generator = dataset.make_initializable_iterator()
-        next_element = batch_generator.get_next()
-        return next_element, batch_generator
-
     def _generate_collections(self):
         """ Specificy collections so model can be reloaded later. """
         tf.add_collections("inputs", self._inputs)
         tf.add_collections("predict", self._predict)
 
-    def train(self, train_file_path, valid_file_path):
+    def train(self, train_iterator, valid_iterator):
         """ Train and validate. """
         self._train_admin_setup()
         tf.global_variables_initializer().run()
@@ -98,14 +89,16 @@ class PilotNet(object):
             self._saver.restore(self._sess, ckpt.model_checkpoint_path)
 
         # Prepare train and valididation data
-        train_next, train_gen = self._prepare_data(train_file_path)
-        valid_next, valid_gen = self._prepare_data(valid_file_path)
+        train_next, train_iter = train_iterator
+        valid_next, valid_iter = valid_iterator
         best_valid_loss = None
 
         for epoch in range(self._n_epochs):
-            self._sess.run(train_gen.initializer)
+            self._sess.run(train_iter.initializer)
             epoch_loss = []
+            count = 0 
             while True:
+                count+=1
                 try:
                     img_batch, label_batch = self._sess.run(train_next)
                     loss, _ = self._sess.run([self._loss, self._train],
@@ -116,47 +109,48 @@ class PilotNet(object):
                     epoch_loss.append(loss)
                 except tf.errors.OutOfRangeError:
                     break
+            print(count)
+            if epoch % 2 == 0:
+                # Validation every other epoch
+                self._sess.run(valid_iter.initializer)
+                valid_loss = []
+                while True:
+                    try:
+                        img_batch, label_batch = self._sess.run(valid_next)
+                        loss = self._sess.run([self._loss],
+                                              feed_dict={
+                            self._inputs: img_batch['image'],
+                            self._targets: label_batch}
+                        )
+                        valid_loss.append(loss)
+                    except tf.errors.OutOfRangeError:
+                        break
+                # Add summary and save checkpoint after every epoch
+                s = self._sess.run(self._all_summaries, feed_dict={
+                    self._inputs: img_batch['image'],
+                    self._targets: label_batch}
+                )
+                self._train_writer.add_summary(s, global_step=epoch)
+                print("Epoch: {} Train Loss: {} Valid Loss: {}".format(
+                    epoch, np.mean(epoch_loss), np.mean(valid_loss))
+                )
 
-            # Validation after each epoch
-            self._sess.run(valid_gen.initializer)
-            valid_loss = []
-            while True:
-                try:
-                    img_batch, label_batch = self._sess.run(valid_next)
-                    loss = self._sess.run([self._loss],
-                                          feed_dict={
-                        self._inputs: img_batch['image'],
-                        self._targets: label_batch}
-                    )
-                    valid_loss.append(loss)
-                except tf.errors.OutOfRangeError:
-                    break
-            # Add summary and save checkpoint after every epoch
-            s = self._sess.run(self._all_summaries, feed_dict={
-                self._inputs: img_batch['image'],
-                self._targets: label_batch}
-            )
-            self._train_writer.add_summary(s, global_step=epoch)
-            print("Epoch: {} Train Loss: {} Valid Loss: {}".format(
-                epoch, np.mean(epoch_loss), np.mean(valid_loss))
-            )
-
-            if best_valid_loss == None:
-                best_valid_loss = valid_loss
-            elif valid_loss < best_valid_loss:
-                self._saver.save(self._sess, self._ckpt_dir, global_step=self._global_step)
-                best_valid_loss = valid_loss
+                if best_valid_loss == None:
+                    best_valid_loss = valid_loss
+                elif valid_loss < best_valid_loss:
+                    self._saver.save(self._sess, self._ckpt_dir, global_step=self._global_step)
+                    best_valid_loss = valid_loss
 
         # Need to closer writers
         self._train_writer.close()
 
-    def predict(self, file_path):
+    def predict(self, data_iterator):
         # This is customized for this particular pipeline. Predict takes in path
         # to csv file with img path information, predicts, and dumps steering
         # prediction, ground_truth, and img to pickle file.
         import pickle
-        next_element, generator = self._prepare_data(file_path, train=False)
-        self._sess.run(generator.initializer)
+        next_element, iterator = data
+        self._sess.run(iteratorr.initializer)
 
         images = []
         steer_labels = []
@@ -183,64 +177,8 @@ class PilotNet(object):
         with open("predictions.pickle", 'w') as f:
             pickle.dump(data, f)
             print("Predictions pickled...")
-        
-
-
-
-def input_fn(file_path, train=True):
-    """ Generic input function used for creating dataset iterator """
-    # Customized for the Udacity train data processed by scripts to convert from
-    # rosbags to csv files.
-    def _decode_csv(line):
-        # tf.decode_csv needs a record_default as 2nd parameter
-        data = tf.decode_csv(line, list(np.array([""] * 12).reshape(12, 1)))[-8:-5]
-        img_path = home + data[1]
-        img_decoded = tf.to_float(tf.image.decode_image(tf.read_file(img_path)))
-        x = img_decoded / 255.0
-        x.set_shape([480,640,3])
-        x = tf.image.resize_image_with_crop_or_pad(
-            x,
-            200, # Height
-            640, # Width
-        )
-        steer_angle = tf.string_to_number(data[2], tf.float32)
-
-        if train:
-            # https://github.com/tensorflow/models/blob/master/research/slim/preprocessing/inception_preprocessing.py
-            x = tf.image.random_brightness(x, max_delta=32. / 255.)
-            x = tf.image.random_saturation(x, lower=0.5, upper=1.5)
-            x = tf.image.random_hue(x, max_delta=0.2)
-            x = tf.image.random_contrast(x, lower=0.5, upper=1.5)
-            x =  tf.clip_by_value(x, 0.0, 1.0)
-    
-            flip = np.random.randint(2)
-            if flip:
-                x = tf.image.flip_left_right(x)
-                steer_angle *= -1
-
-        # normalize between (-1,1)
-        x = tf.subtract(x, 0.5)
-        x = tf.multiply(x, 2.0)    
-        # return image and image path
-        return {'image': x, 'image_path': data[1]}, [steer_angle]
-
-    # skip() header row,
-    # filter() for center camera,
-    # map() transform each line by applying decode_csv()
-    dataset = (tf.contrib.data.TextLineDataset(file_path)
-               .skip(1)
-               .filter(lambda x: tf.equal(
-                       tf.string_split(tf.reshape(x, (1,)), ',').values[4],
-                       'center_camera'))
-               .map(_decode_csv))
-    return dataset
-
 
 if __name__ == "__main__":
-    home = config['bag4']
-    train_file_path = home + "train_interpolated.csv"
-    print(train_file_path)
-    valid_file_path = home + "valid_interpolated.csv"
 
     tf.reset_default_graph()
 
@@ -255,5 +193,26 @@ if __name__ == "__main__":
             n_epochs=20,
             batch_size=128
         )
-        model.train(train_file_path, valid_file_path)
-	model.predict(valid_file_path)
+        
+        train_data = DataHandler(
+            data_dir=config['data_dir'],
+            file_name='train_interpolated.csv',
+            bags=config['bags'],
+            batch_size=128,
+            train=True,
+            augment=True
+        )
+
+        valid_data = DataHandler(
+            data_dir=config['data_dir'],
+            file_name='valid_interpolated.csv',
+            bags=config['bags'],
+            batch_size=1,
+            train=False,
+            augment=False
+        )
+
+        model.train(train_data.get_iterator(), valid_data.get_iterator())
+        # TODO: upload test data so we can run test on test data instead of
+        # validation data.
+        model.predict(valid_data.get_iterator())
