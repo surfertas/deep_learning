@@ -96,9 +96,9 @@ class PilotNet(object):
         for epoch in range(self._n_epochs):
             self._sess.run(train_iter.initializer)
             epoch_loss = []
-            count = 0 
+            count = 0
             while True:
-                count+=1
+                count += 1
                 try:
                     img_batch, label_batch = self._sess.run(train_next)
                     loss, _ = self._sess.run([self._loss, self._train],
@@ -159,9 +159,9 @@ class PilotNet(object):
             try:
                 img, steer_label = self._sess.run(next_element)
                 steer_pred = self._sess.run([self._predict],
-                    feed_dict={self._inputs: img['image']}
-                )
-		# Store image path as raw image too large.
+                                            feed_dict={self._inputs: img['image']}
+                                            )
+                # Store image path as raw image too large.
                 images.append(img['image_path'])
                 steer_labels.append(steer_label)
                 steer_preds.append(steer_pred)
@@ -193,7 +193,7 @@ if __name__ == "__main__":
             n_epochs=20,
             batch_size=128
         )
-        
+
         train_data = DataHandler(
             data_dir=config['data_dir'],
             file_name='train_interpolated.csv',
