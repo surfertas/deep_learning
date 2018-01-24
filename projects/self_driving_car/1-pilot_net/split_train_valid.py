@@ -12,15 +12,15 @@ import argparse
 import os
 
 def main(args):
-    with open(os.path.join(args.original_path, args.file_name), 'r') as f:
+    with open(os.path.join(args.i, args.file_name), 'r') as f:
         csv_file= f.readlines()
         data_size = len(csv_file)
         valid_size = int(data_size * args.valid_split)
 
-    with open(os.path.join(args.out_path, "valid_" + args.file_name), 'w+') as f:
+    with open(os.path.join(args.o, "valid_" + args.file_name), 'w+') as f:
         valid_file = f.writelines(csv_file[:valid_size])
 
-    with open(os.path.join(args.out_path,"train_" + args.file_name), 'w+') as f:
+    with open(os.path.join(args.o,"train_" + args.file_name), 'w+') as f:
         train_file = f.writelines(csv_file[valid_size:])
 
 
@@ -30,10 +30,10 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(
         description='Split into training and validation dataset')
-    parser.add_argument('--original_path', type=str,
+    parser.add_argument('--i', type=str,
                         default=default_original_path,
                         help='Path to original dataset information')
-    parser.add_argument('--out_path', type=str,
+    parser.add_argument('--o', type=str,
                         default=default_out_path,
                         help='Path to write train and valid dataset information')
     parser.add_argument('--file_name', type=str,
