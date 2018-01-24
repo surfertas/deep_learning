@@ -47,9 +47,6 @@ class DataHandler(object):
                 200,  # Height
                 640,  # Width
             )
-            # normalize between (-1,1)
-            x = tf.subtract(x, 0.5)
-            x = tf.multiply(x, 2.0)
 
             steer_angle = tf.string_to_number(data[2], tf.float32)
             return {'image': x, 'image_path': data[1]}, [steer_angle]
@@ -68,9 +65,6 @@ class DataHandler(object):
                 x = tf.image.flip_left_right(x)
                 target *= -1
 
-            # normalize between (-1,1)
-            x = tf.subtract(x, 0.5)
-            x = tf.multiply(x, 2.0)
             # return image and image path
             return {'image': x, 'image_path': image['image_path']}, target
 
