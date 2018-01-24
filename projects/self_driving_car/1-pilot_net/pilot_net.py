@@ -100,9 +100,7 @@ class PilotNet(object):
         for epoch in range(self._n_epochs):
             self._sess.run(train_iter.initializer)
             epoch_loss = []
-            count = 0
             while True:
-                count += 1
                 try:
                     img_batch, label_batch = self._sess.run(train_next)
                     loss, _ = self._sess.run([self._loss, self._train],
@@ -113,37 +111,36 @@ class PilotNet(object):
                     epoch_loss.append(loss)
                 except tf.errors.OutOfRangeError:
                     break
-            print(count)
-            if epoch % 2 == 0:
-                # Validation every other epoch
-                self._sess.run(valid_iter.initializer)
-                valid_loss = []
-                while True:
-                    try:
-                        img_batch, label_batch = self._sess.run(valid_next)
-                        loss = self._sess.run([self._loss],
-                                              feed_dict={
-                            self._inputs: img_batch['image'],
-                            self._targets: label_batch}
-                        )
-                        valid_loss.append(loss)
-                    except tf.errors.OutOfRangeError:
-                        break
-                # Add summary and save checkpoint after every epoch
-                s = self._sess.run(self._all_summaries, feed_dict={
-                    self._inputs: img_batch['image'],
-                    self._targets: label_batch}
-                )
-                self._train_writer.add_summary(s, global_step=epoch)
-                print("Epoch: {} Train Loss: {} Valid Loss: {}".format(
-                    epoch, np.mean(epoch_loss), np.mean(valid_loss))
-                )
 
-                if best_valid_loss == None:
-                    best_valid_loss = valid_loss
-                elif valid_loss < best_valid_loss:
-                    self._saver.save(self._sess, self._ckpt_dir, global_step=self._global_step)
-                    best_valid_loss = valid_loss
+            # Validation every other epoch
+            self._sess.run(valid_iter.initializer)
+            valid_loss = []
+            while True:
+                try:
+                    img_batch, label_batch = self._sess.run(valid_next)
+                    loss = self._sess.run([self._loss],
+                                          feed_dict={
+                        self._inputs: img_batch['image'],
+                        self._targets: label_batch}
+                    )
+                    valid_loss.append(loss)
+                except tf.errors.OutOfRangeError:
+                    break
+            # Add summary and save checkpoint after every epoch
+            s = self._sess.run(self._all_summaries, feed_dict={
+                self._inputs: img_batch['image'],
+                self._targets: label_batch}
+            )
+            self._train_writer.add_summary(s, global_step=epoch)
+            print("Epoch: {} Train Loss: {} Valid Loss: {}".format(
+                epoch, np.mean(epoch_loss), np.mean(valid_loss))
+            )
+
+            if best_valid_loss == None:
+                best_valid_loss = valid_loss
+            elif valid_loss < best_valid_loss:
+                self._saver.save(self._sess, self._ckpt_dir, global_step=self._global_step)
+                best_valid_loss = valid_loss
 
         # Need to closer writers
         self._train_writer.close()
@@ -153,8 +150,8 @@ class PilotNet(object):
         # to csv file with img path information, predicts, and dumps steering
         # prediction, ground_truth, and img to pickle file.
         import pickle
-        next_element, iterator = data
-        self._sess.run(iteratorr.initializer)
+        next_element, iterator = data_iterator
+        self._sess.run(iterator.initializer)
 
         images = []
         steer_labels = []
@@ -163,7 +160,10 @@ class PilotNet(object):
             try:
                 img, steer_label = self._sess.run(next_element)
                 steer_pred = self._sess.run([self._predict],
-                                            feed_dict={self._inputs: img['image']}
+                                            feed_dict={
+                                            #TODO: why do we need [0] here,
+                                           # when batch size = 1 works fine with validation.
+                                                self._inputs: img['image'][0]}
                                             )
                 # Store image path as raw image too large.
                 images.append(img['image_path'])
@@ -194,7 +194,7 @@ if __name__ == "__main__":
             'pilot_net',
             'checkpoints/pilot_net',
             input_dim=(200, 640, 3),
-            n_epochs=20,
+            n_epochs=2,
             batch_size=128
         )
 
