@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+# @author Tasuku Miura
+# @brief Utility for splitting data into train and validation.
+#
 # Script to split a given csv file into separate csv files for training and
 # validation.
 # 
@@ -9,24 +12,15 @@ import argparse
 import os
 
 def main(args):
-    with open(os.path.join(
-            args.original_path,
-            args.file_name),
-        'r') as f:
+    with open(os.path.join(args.original_path, args.file_name), 'r') as f:
         csv_file= f.readlines()
         data_size = len(csv_file)
         valid_size = int(data_size * args.valid_split)
 
-    with open(os.path.join(
-            args.out_path,
-            "valid_" + args.file_name),
-        'w+') as f:
+    with open(os.path.join(args.out_path, "valid_" + args.file_name), 'w+') as f:
         valid_file = f.writelines(csv_file[:valid_size])
 
-    with open(os.path.join(
-            args.out_path,
-            "train_" + args.file_name),
-        'w+') as f:
+    with open(os.path.join(args.out_path,"train_" + args.file_name), 'w+') as f:
         train_file = f.writelines(csv_file[valid_size:])
 
 
