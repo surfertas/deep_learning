@@ -7,6 +7,7 @@ import tensorflow as tf
 import numpy as np
 from config import config
 
+
 class DataHandler(object):
 
     def __init__(self, data_dir, file_name, bags, batch_size, train, augment):
@@ -17,7 +18,7 @@ class DataHandler(object):
 
         self._temp_home_dir = None
         self._data_set = None
-        
+
         self._train = train
         self._augment = augment
         self._batch_size = batch_size
@@ -30,26 +31,26 @@ class DataHandler(object):
             for bag in self._bags
         ]
         return file_paths
-    
+
     def _generate_data_set(self, train):
         def __decode_csv(line):
             # tf.decode_csv needs a record_default as 2nd parameter
             data = tf.decode_csv(line, list(np.array([""] * 12).reshape(12, 1)))[-8:-5]
-            img_path = self._temp_home_dir +'/'+ data[1]
+            img_path = self._temp_home_dir + '/' + data[1]
             img_decoded = tf.to_float(tf.image.decode_image(tf.read_file(img_path)))
 
             # pre-process, normalize to 0 - 1 range, and resize image.
             x = img_decoded / 255.0
-            x.set_shape([480,640,3])
+            x.set_shape([480, 640, 3])
             x = tf.image.resize_image_with_crop_or_pad(
                 x,
-                200, # Height
-                640, # Width
+                200,  # Height
+                640,  # Width
             )
             # normalize between (-1,1)
             x = tf.subtract(x, 0.5)
-            x = tf.multiply(x, 2.0)    
-  
+            x = tf.multiply(x, 2.0)
+
             steer_angle = tf.string_to_number(data[2], tf.float32)
             return {'image': x, 'image_path': data[1]}, [steer_angle]
 
@@ -60,7 +61,7 @@ class DataHandler(object):
             x = tf.image.random_saturation(x, lower=0.5, upper=1.5)
             x = tf.image.random_hue(x, max_delta=0.2)
             x = tf.image.random_contrast(x, lower=0.5, upper=1.5)
-            x =  tf.clip_by_value(x, 0.0, 1.0)
+            x = tf.clip_by_value(x, 0.0, 1.0)
 
             flip = np.random.randint(2)
             if flip == 1:
@@ -69,21 +70,21 @@ class DataHandler(object):
 
             # normalize between (-1,1)
             x = tf.subtract(x, 0.5)
-            x = tf.multiply(x, 2.0)    
+            x = tf.multiply(x, 2.0)
             # return image and image path
             return {'image': x, 'image_path': image['image_path']}, target
- 
+
         for file_path in self._file_paths:
             # For each path set _temp_home_dir to be used in call to _decode_csv.
-            # e.g. ../1-pilot_net/data/bag4 
-            self._temp_home_dir = file_path.rsplit('/',1)[0]
+            # e.g. ../1-pilot_net/data/bag4
+            self._temp_home_dir = file_path.rsplit('/', 1)[0]
             dataset = (tf.contrib.data.TextLineDataset(file_path)
-                   .skip(1)
-                   .filter(lambda x: tf.equal(
-                           tf.string_split(tf.reshape(x, (1,)), ',').values[4],
-                           'center_camera'))
-                   .map(__decode_csv, num_parallel_calls=4))
-            
+                       .skip(1)
+                       .filter(lambda x: tf.equal(
+                               tf.string_split(tf.reshape(x, (1,)), ',').values[4],
+                               'center_camera'))
+                       .map(__decode_csv, num_parallel_calls=4))
+
             if self._data_set == None:
                 self._data_set = dataset
                 print("Init dataset")
@@ -97,7 +98,7 @@ class DataHandler(object):
             augmented = self._data_set.map(__random_augmentation, num_parallel_calls=4)
             self._data_set = self._data_set.concatenate(augmented)
             print("Augmentation completed...")
- 
+
     def get_iterator(self):
         """ Create data iterator """
         assert(self._data_set != None)
