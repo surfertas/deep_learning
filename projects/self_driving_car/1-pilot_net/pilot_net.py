@@ -39,7 +39,7 @@ class PilotNet(object):
         """ Model specification of PilotNet. """
         assert(x[0].shape == (self._img_h, self._img_w, self._img_c))
         # normalize between (-1,1)
-        out = tf.subtract(out, 0.5)
+        out = tf.subtract(x, 0.5)
         out = tf.multiply(out, 2.0)
 
         out = tf.layers.conv2d(x, 24, [5, 5], (2, 2), "valid", activation=tf.nn.relu)
