@@ -36,6 +36,8 @@ class DataHandler(object):
         def __decode_csv(line):
             # tf.decode_csv needs a record_default as 2nd parameter
             data = tf.decode_csv(line, list(np.array([""] * 12).reshape(12, 1)))[-8:-5]
+            #TODO: need to make it so the file directory is consistent.
+            # Or upload test data...(first choice)
             img_path = self._temp_home_dir + '/' + data[1]
             img_decoded = tf.to_float(tf.image.decode_image(tf.read_file(img_path)))
 
