@@ -51,7 +51,7 @@ class DataHandler(object):
             )
 
             steer_angle = tf.string_to_number(data[2], tf.float32)
-            return {'image': x, 'image_path': data[1]}, [steer_angle]
+            return {'image': x, 'image_path': img_path}, [steer_angle]
 
         def __random_augmentation(image, target):
             # https://github.com/tensorflow/models/blob/master/research/slim/preprocessing/inception_preprocessing.py
