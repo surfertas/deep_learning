@@ -1,7 +1,9 @@
 #!/usr/bin/env python
-# Model specification and training, validation pipeline to train PilotNet, an
-# Nvidia designed model for predicting steering angles from a single front
-# facing camera on a car in motion.
+# @author Tasuku Miura
+# @brief with batch normalization.
+
+# Unfortunately training on all bags + data augmentation is still resulting in
+# the prediction of a single value...
 
 import os
 import tensorflow as tf
@@ -10,18 +12,7 @@ from config import config
 
 
 # custom library
-# from viewer import *
 from data_pipeline import *
-
-# https://arxiv.org/pdf/1704.07911.pdf
-# https://arxiv.org/pdf/1708.03798.pdf
-# data: https://github.com/udacity/self-driving-car/tree/master/datasets/CH2
-# scripts to convert rosbags to csv:
-# https://github.com/rwightman/udacity-driving-reader
-
-# TODO:
-# 3. Implement visualization portion.
-# 4. Convert image from RGB to YSV
 
 
 class PilotNet(object):
@@ -47,19 +38,10 @@ class PilotNet(object):
         out = tf.subtract(x, 0.5)
         out = tf.multiply(out, 2.0)
 
-        # out = tf.layers.conv2d(out, 24, [5, 5], (2, 2), "valid", activation=tf.nn.relu)
         out = conv2d_bn(out, 24, [5, 5], (2, 2), "valid", activation=tf.nn.relu)
-
-        # out = tf.layers.conv2d(out, 36, [5, 5], (2, 2), "valid", activation=tf.nn.relu)
         out = conv2d_bn(out, 36, [5, 5], (2, 2), "valid", activation=tf.nn.relu)
-
-        # out = tf.layers.conv2d(out, 48, [5, 5], (2, 2), "valid", activation=tf.nn.relu)
         out = conv2d_bn(out, 48, [5, 5], (2, 2), "valid", activation=tf.nn.relu)
-
-        # out = tf.layers.conv2d(out, 64, [3, 3], (1, 1), "valid", activation=tf.nn.relu)
         out = conv2d_bn(out, 64, [3, 3], (1, 1), "valid", activation=tf.nn.relu)
-
-        # out = tf.layers.conv2d(out, 64, [3, 3], (1, 1), "valid", activation=tf.nn.relu)
         out = conv2d_bn(out, 64, [3, 3], (1, 1), "valid", activation=tf.nn.relu)
 
         out = tf.reshape(out, [-1, 64 * 18 * 73])
