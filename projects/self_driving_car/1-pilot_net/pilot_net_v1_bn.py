@@ -47,19 +47,19 @@ class PilotNet(object):
         out = tf.subtract(x, 0.5)
         out = tf.multiply(out, 2.0)
 
-        #out = tf.layers.conv2d(out, 24, [5, 5], (2, 2), "valid", activation=tf.nn.relu)
+        # out = tf.layers.conv2d(out, 24, [5, 5], (2, 2), "valid", activation=tf.nn.relu)
         out = conv2d_bn(out, 24, [5, 5], (2, 2), "valid", activation=tf.nn.relu)
 
-        #out = tf.layers.conv2d(out, 36, [5, 5], (2, 2), "valid", activation=tf.nn.relu)
+        # out = tf.layers.conv2d(out, 36, [5, 5], (2, 2), "valid", activation=tf.nn.relu)
         out = conv2d_bn(out, 36, [5, 5], (2, 2), "valid", activation=tf.nn.relu)
 
-        #out = tf.layers.conv2d(out, 48, [5, 5], (2, 2), "valid", activation=tf.nn.relu)
+        # out = tf.layers.conv2d(out, 48, [5, 5], (2, 2), "valid", activation=tf.nn.relu)
         out = conv2d_bn(out, 48, [5, 5], (2, 2), "valid", activation=tf.nn.relu)
 
-        #out = tf.layers.conv2d(out, 64, [3, 3], (1, 1), "valid", activation=tf.nn.relu)
+        # out = tf.layers.conv2d(out, 64, [3, 3], (1, 1), "valid", activation=tf.nn.relu)
         out = conv2d_bn(out, 64, [3, 3], (1, 1), "valid", activation=tf.nn.relu)
 
-        #out = tf.layers.conv2d(out, 64, [3, 3], (1, 1), "valid", activation=tf.nn.relu)
+        # out = tf.layers.conv2d(out, 64, [3, 3], (1, 1), "valid", activation=tf.nn.relu)
         out = conv2d_bn(out, 64, [3, 3], (1, 1), "valid", activation=tf.nn.relu)
 
         out = tf.reshape(out, [-1, 64 * 18 * 73])
@@ -134,7 +134,7 @@ class PilotNet(object):
                 try:
                     img_batch, label_batch = self._sess.run(valid_next)
                     loss, step = self._sess.run([self._loss, self._global_step],
-                                          feed_dict={
+                                                feed_dict={
                         self._inputs: img_batch['image'],
                         self._targets: label_batch}
                     )
@@ -176,8 +176,8 @@ class PilotNet(object):
                 img, steer_label = self._sess.run(next_element)
                 steer_pred = self._sess.run([self._predict],
                                             feed_dict={
-                                            #TODO: why do we need [0] here,
-                                           # when batch size = 1 works fine with validation.
+                                            # TODO: why do we need [0] here,
+                                            # when batch size = 1 works fine with validation.
                                                 self._inputs: img['image'][0]}
                                             )
                 # Store image path as raw image too large.
