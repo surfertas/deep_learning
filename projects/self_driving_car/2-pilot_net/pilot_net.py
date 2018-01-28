@@ -1,3 +1,6 @@
+# @author Tasuku Miura
+# @brief PyTorch implementation of PilotNet
+
 import os
 import pickle
 
