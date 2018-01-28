@@ -1,3 +1,3 @@
 Notes:
 ---
-1/28/2017 Moving pilotnet related work to PyTorch.
+1/28/2018 Moving pilotnet related work to PyTorch.
