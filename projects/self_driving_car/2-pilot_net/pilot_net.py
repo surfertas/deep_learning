@@ -141,9 +141,9 @@ def test(model, loss_fn, optimizer, test_loader):
     print('Test set: Average loss: {:.4f}\n'.format(test_loss))
 
     data_dict = {
-        "image": images,
-        "steer_target": targets,
-        "steer_pred": predicts
+        "image": np.array(images),
+        "steer_target": np.array(targets).astype('float'),
+        "steer_pred": np.array(predicts).astype('float')
     }
 
     with open("pyt_predictions.pickle", 'wb') as f:
