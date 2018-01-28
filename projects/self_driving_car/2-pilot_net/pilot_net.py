@@ -184,10 +184,9 @@ def main():
 
     valid_data = DriveDataset(valid_csv_file, root_dir, bags, valid_transforms)
     print("Valid data size: {}".format(len(valid_data)))
-
     valid_loader = DataLoader(valid_data, batch_size=1, shuffle=False, num_workers=1)
-
     print("Data loaded...")
+
     model = PilotNet().cuda()
     optimizer = torch.optim.Adam(model.parameters())
     loss_fn = nn.MSELoss()
