@@ -4,8 +4,8 @@
 #
 # Script to split a given csv file into separate csv files for training and
 # validation.
-# 
-# Note: 
+#
+# Note:
 # 1. You can set the defaults for original path and file name. Default for
 # validation is set at 10% allocated to validation.
 # 2. Formatting data to work with PyTorch custom data set api.
@@ -13,16 +13,17 @@
 import argparse
 import os
 
+
 def main(args):
     with open(os.path.join(args.i, args.file_name), 'r') as f:
-        csv_file= f.readlines()
+        csv_file = f.readlines()
         data_size = len(csv_file)
         valid_size = int(data_size * args.valid_split)
 
     with open(os.path.join(args.o, "valid_" + args.file_name), 'w+') as f:
         valid_file = f.writelines(csv_file[:valid_size])
 
-    with open(os.path.join(args.o,"train_" + args.file_name), 'w+') as f:
+    with open(os.path.join(args.o, "train_" + args.file_name), 'w+') as f:
         # Add header back to top of csv file
         f.writelines(csv_file[0])
         f.writelines(csv_file[valid_size:])
