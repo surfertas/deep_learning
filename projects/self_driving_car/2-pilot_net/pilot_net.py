@@ -69,6 +69,43 @@ class PilotNetBn(nn.Module):
         return x
 
 
+from torchvision import models
+
+class AlexNetConv4(nn.Module):
+    def __init__(self):
+        super(AlexNetConv4, self).__init__()
+        self.alexnet = models.alexnet(pretrained=True)
+
+        self.features = nn.Sequential(
+            # stop at conv4
+            *list(self.alexnet.features.children())[:-3]
+        )
+    def forward(self, x):
+        x = self.features(x)
+        return x
+
+
+class PilotNetAlexNetTransfer(nn.Module):
+
+    def __init__(self):
+        super(PilotNetAlexNetTransfer, self).__init__()
+        self.features = AlexNetConv4()
+        self.fc1 = nn.Linear(64 * 43264, 2048)
+        self.fc2 = nn.Linear(2048, 100)
+        self.fc3 = nn.Linear(100, 50)
+        self.fc4 = nn.Linear(50, 10)
+        self.fc5 = nn.Linear(10, 1)
+
+    def forward(self, x):
+        x = self.features(x)
+        x = x.view(x.size(0), -1)
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        x = F.relu(self.fc3(x))
+        x = F.relu(self.fc4(x))
+        x = self.fc5(x)
+        return x
+
 # Fine tuning from intermediate layer:
 # https://discuss.pytorch.org/t/how-to-extract-features-of-an-image-from-a-trained-model/119/3
 

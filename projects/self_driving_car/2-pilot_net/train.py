@@ -107,8 +107,52 @@ def create_dir(dir_name):
     if not os.path.isdir(dir_name):
         os.makedirs(dir_name)
 
+def imagenet_transforms():
+    channel_stats = dict(mean=[0.485, 0.456, 0.406],
+                         std=[0.229, 0.224, 0.225])
+    train_transforms = transforms.Compose([
+        transforms.ToPILImage(),
+        transforms.Resize(256),
+        transforms.CenterCrop(224),
+        transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4, hue=0.1),
+        transforms.ToTensor(),
+        transforms.Normalize(**channel_stats)
+    ])
+
+    eval_transforms = transforms.Compose([
+        transforms.ToPILImage(),
+        transforms.Resize(256),
+        transforms.CenterCrop(224),
+        transforms.ToTensor(),
+        transforms.Normalize(**channel_stats)
+    ])
+
+    return {
+        'train_transforms': train_transforms,
+        'eval_transforms': eval_transforms,
+    } 
+
+def pilotnet_transforms():
+    train_transforms = transforms.Compose([
+        transforms.ToPILImage(),
+        transforms.Resize((66, 200)),
+        transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4, hue=0.1),
+        transforms.ToTensor()
+    ])
+
+    eval_transforms = transforms.Compose([
+        transforms.ToPILImage(),
+        transforms.Resize((66, 200)),
+        transforms.ToTensor()
+    ])
+    return {
+        'train_transforms': train_transforms,
+        'eval_transforms': eval_transforms,
+    } 
+
+
 def main():
-    bags = ['bag1', 'bag2', 'bag4', 'bag5', 'bag6']
+    bags = ['bag1', 'bag2']#, 'bag4', 'bag5', 'bag6']
     root_dir = r'/home/ubuntu/ws/deep_learning/projects/self_driving_car/1-pilot_net/data'
     ckpt_path = os.path.join(root_dir, 'output')#checkpoint.pth.tar')
     log_path = os.path.join(root_dir, 'log')
@@ -122,19 +166,10 @@ def main():
     train_csv_file = r'train_interpolated.csv'
     valid_csv_file = r'valid_interpolated.csv'
 
-    train_transforms = transforms.Compose([
-        transforms.ToPILImage(),
-        transforms.Resize((66, 200)),
-        transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.3),
-        transforms.ToTensor()
-    ])
 
-    pre_process = transforms.Compose([
-        transforms.ToPILImage(),
-        transforms.Resize((66, 200)),
-        transforms.ToTensor()
-    ])
-
+    transforms = imagenet_transforms()
+    train_transforms = transforms['train_transforms']
+    pre_process = transforms['eval_transforms']
 
     train_data_aug = DriveDataset(train_csv_file, root_dir, bags, train_transforms)
     train_data_orig = DriveDataset(train_csv_file, root_dir, bags, pre_process)
@@ -148,7 +183,7 @@ def main():
     valid_loader = DataLoader(valid_data, batch_size=1, shuffle=False, num_workers=1)
     print("Data loaded...")
 
-    model = PilotNetBn().cuda()
+    model = PilotNetAlexNetTransfer().cuda()
 
     resume = False  # set to false for now.
     if resume:
