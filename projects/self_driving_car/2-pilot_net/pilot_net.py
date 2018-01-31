@@ -68,6 +68,10 @@ class PilotNetBn(nn.Module):
         x = self.fc4(x)
         return x
 
+
+# Fine tuning from intermediate layer:
+# https://discuss.pytorch.org/t/how-to-extract-features-of-an-image-from-a-trained-model/119/3
+
 #class PilotNetLSTM(object):
 #    def __init__(self):
 #        super(PilotNetLSTM, self).__init__()

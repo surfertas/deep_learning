@@ -5,66 +5,24 @@ import os
 import pickle
 
 from skimage import io, transform
+import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
 
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset, DataLoader, ConcatDataset
 from torchvision import transforms, utils
 
 # used for logging to TensorBoard
 from tensorboard_logger import configure, log_value
 
+from data_loader import *
 from pilot_net import *
 
 import math
 
-
-class DriveDataset(Dataset):
-
-    """
-
-    Custom dataset to handle Udacity drive data.
-
-    """
-
-    def __init__(self, csv_file, root_dir, bags, transform=None):
-        self._csv_file = csv_file
-        self._root_dir = root_dir
-        self._bags = bags
-        self._transform = transform
-        self._frames = self._get_frames()
-
-    def __len__(self):
-        return len(self._frames)
-
-    def __getitem__(self, idx):
-        img_name = os.path.join(self._root_dir,
-                                self._frames['bag'].iloc[idx],
-                                self._frames['filename'].iloc[idx])
-        image = io.imread(img_name)
-        target = self._frames['angle'].iloc[idx]
-        sample = {'image': image, 'image_path': img_name, 'steer': target}
-
-        if self._transform:
-            sample['image'] = self._transform(sample['image'])
-
-        return sample
-
-    def _get_frames(self):
-        file_paths = [
-            (bag, os.path.join(self._root_dir, bag, self._csv_file))
-            for bag in self._bags
-        ]
-
-        frames = []
-        for bag, path in file_paths:
-            df = pd.read_csv(path)
-            df['bag'] = bag
-            frames.append(df[df.frame_id == 'center_camera'])
-        return pd.concat(frames, axis=0)
 
 
 def train_one_epoch(epoch, model, loss_fn, optimizer, train_loader):
@@ -132,12 +90,12 @@ def test(model, loss_fn, optimizer, test_loader):
         "steer_pred": np.array(predicts).astype('float')
     }
 
-    with open("pyt_predictions.pickle", 'wb') as f:
+    with open("pyt_predictions_test.pickle", 'wb') as f:
         pickle.dump(data_dict, f)
         print("Predictions pickled...")
 
 
-def save_checkpoint(state, is_best, file_name='./output/checkpoint.pth.tar'):
+def save_checkpoint(state, is_best, file_name='/output/checkpoint.pth.tar'):
     """Save checkpoint if a new best is achieved"""
     if is_best:
         print ("=> Saving a new best")
@@ -145,11 +103,21 @@ def save_checkpoint(state, is_best, file_name='./output/checkpoint.pth.tar'):
     else:
         print ("=> Validation Accuracy did not improve")
 
+def create_dir(dir_name):
+    if not os.path.isdir(dir_name):
+        os.makedirs(dir_name)
 
 def main():
     bags = ['bag1', 'bag2', 'bag4', 'bag5', 'bag6']
     root_dir = r'/home/ubuntu/ws/deep_learning/projects/self_driving_car/1-pilot_net/data'
-    ckpt_path = os.path.join(root_dir, '/output/checkpoint.pth.tar')
+    ckpt_path = os.path.join(root_dir, 'output')#checkpoint.pth.tar')
+    log_path = os.path.join(root_dir, 'log')
+    
+    create_dir(ckpt_path)
+    create_dir(log_path)
+
+    # Configure tensorboard log dir
+    configure(os.path.join(root_dir, 'log'))
 
     train_csv_file = r'train_interpolated.csv'
     valid_csv_file = r'valid_interpolated.csv'
@@ -161,22 +129,26 @@ def main():
         transforms.ToTensor()
     ])
 
-    valid_transforms = transforms.Compose([
+    pre_process = transforms.Compose([
         transforms.ToPILImage(),
         transforms.Resize((66, 200)),
         transforms.ToTensor()
     ])
 
-    train_data = DriveDataset(train_csv_file, root_dir, bags, train_transforms)
+
+    train_data_aug = DriveDataset(train_csv_file, root_dir, bags, train_transforms)
+    train_data_orig = DriveDataset(train_csv_file, root_dir, bags, pre_process)
+    train_data = ConcatDataset([train_data_orig, train_data_aug])
+
     print("Train data size: {}".format(len(train_data)))
     train_loader = DataLoader(train_data, batch_size=64, shuffle=True, num_workers=4)
 
-    valid_data = DriveDataset(valid_csv_file, root_dir, bags, valid_transforms)
+    valid_data = DriveDataset(valid_csv_file, root_dir, bags, pre_process)
     print("Valid data size: {}".format(len(valid_data)))
     valid_loader = DataLoader(valid_data, batch_size=1, shuffle=False, num_workers=1)
     print("Data loaded...")
 
-    model = PilotNet().cuda()
+    model = PilotNetBn().cuda()
 
     resume = False  # set to false for now.
     if resume:
@@ -187,17 +159,17 @@ def main():
     loss_fn = nn.MSELoss()
     print("Model setup...")
 
-    for epoch in range(10):
+    for epoch in range(15):
         train_one_epoch(epoch, model, loss_fn, optimizer, train_loader)
         ave_valid_loss = validate(epoch, model, loss_fn, optimizer, valid_loader)
 
         is_best = True  # Save checkpoint every epoch for now.
 
         save_checkpoint({
-            'epoch': start_epoch + epoch + 1,
+            'epoch': epoch,
             'state_dict': model.state_dict(),
             'optimizer': optimizer.state_dict()
-        }, is_best)
+        }, is_best, os.path.join(ckpt_path, 'checkpoint.pth.tar'))
 
     test(model, loss_fn, optimizer, valid_loader)
 

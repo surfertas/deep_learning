@@ -20,7 +20,7 @@ from tensorboard_logger import configure, log_value
 from pilot_net import *
 
 import math
-
+import copy
 
 
 class DriveDataset(Dataset):
@@ -49,7 +49,7 @@ class DriveDataset(Dataset):
         target = self._frames['angle'].iloc[idx]
         sample = {'image': image, 'image_path': img_name, 'steer': target}
 
-        if self._transform:
+        if self._transform is not None:
             sample['image'] = self._transform(sample['image'])
 
         return sample
@@ -98,7 +98,7 @@ class SequenceDriveDataset(Dataset):
         target = self._frames['angle'].iloc[idx]
         sample = {'image': images, 'steer': target}
 
-        if self._transform:
+        if self._transform is not None:
             transformed = []
             for image in sample['image']:
                 transformed.append(self._transform(image))
