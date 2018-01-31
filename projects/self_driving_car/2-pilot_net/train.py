@@ -29,10 +29,10 @@ import math
 def get_device_stats():
     print("Device count: {}".format(torch.cuda.device_count()))
     # only can use from PyTorch v0.4
-    #print("Max_memory_allocated: {}".format(torch.cuda.max_memory_allocated()))
-    #print("Max_memory_cached: {}".format(torch.cuda.max_memory_cached()))
-    #print("Memory_allocated: {}".format(torch.cuda.memory_allocated()))
-    
+    # print("Max_memory_allocated: {}".format(torch.cuda.max_memory_allocated()))
+    # print("Max_memory_cached: {}".format(torch.cuda.max_memory_cached()))
+    # print("Memory_allocated: {}".format(torch.cuda.memory_allocated()))
+
 
 def train_one_epoch(epoch, model, loss_fn, optimizer, train_loader):
     model.train()
@@ -112,6 +112,7 @@ def save_checkpoint(state, is_best, file_name='/output/checkpoint.pth.tar'):
     else:
         print ("=> Validation Accuracy did not improve")
 
+
 def create_dir(dir_name):
     if not os.path.isdir(dir_name):
         os.makedirs(dir_name)
@@ -120,19 +121,18 @@ def create_dir(dir_name):
 def main():
     bags = ['bag1', 'bag2', 'bag4', 'bag5', 'bag6']
     root_dir = r'/home/ubuntu/ws/deep_learning/projects/self_driving_car/1-pilot_net/data'
-    ckpt_path = os.path.join(root_dir, 'output')#checkpoint.pth.tar')
+    ckpt_path = os.path.join(root_dir, 'output')  # checkpoint.pth.tar')
     log_path = os.path.join(root_dir, 'log')
-    
+
     create_dir(ckpt_path)
     create_dir(log_path)
-    
+
     print(get_device_stats())
     # Configure tensorboard log dir
     configure(os.path.join(root_dir, 'log'))
 
     train_csv_file = r'train_interpolated.csv'
     valid_csv_file = r'valid_interpolated.csv'
-
 
     transforms = imagenet_transforms()
     train_transforms = transforms['train_transforms']

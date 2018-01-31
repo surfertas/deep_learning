@@ -39,7 +39,8 @@ def imagenet_transforms():
     return {
         'train_transforms': train_transforms,
         'eval_transforms': eval_transforms,
-    } 
+    }
+
 
 def pilotnet_transforms():
     train_transforms = transforms.Compose([
@@ -57,4 +58,4 @@ def pilotnet_transforms():
     return {
         'train_transforms': train_transforms,
         'eval_transforms': eval_transforms,
-    } 
+    }

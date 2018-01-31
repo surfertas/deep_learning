@@ -71,6 +71,7 @@ class PilotNetBn(nn.Module):
 
 from torchvision import models
 
+
 class AlexNetConv4(nn.Module):
 
     def __init__(self):
@@ -81,6 +82,7 @@ class AlexNetConv4(nn.Module):
             # stop at conv4
             *list(self.alexnet.features.children())[:-3]
         )
+
     def forward(self, x):
         x = self.features(x)
         return x
@@ -92,7 +94,7 @@ class PilotNetAlexNetTransfer(nn.Module):
         super(PilotNetAlexNetTransfer, self).__init__()
         self.features = AlexNetConv4()
         self.fc1 = nn.Linear(43264, 1024)
-        self.fc2 = nn.Linear(1024,10)
+        self.fc2 = nn.Linear(1024, 10)
         self.fc3 = nn.Linear(10, 1)
 
     def forward(self, x):
@@ -106,10 +108,9 @@ class PilotNetAlexNetTransfer(nn.Module):
 # Fine tuning from intermediate layer:
 # https://discuss.pytorch.org/t/how-to-extract-features-of-an-image-from-a-trained-model/119/3
 
-#class PilotNetLSTM(object):
+# class PilotNetLSTM(object):
 #    def __init__(self):
 #        super(PilotNetLSTM, self).__init__()
 #        self.rnn = nn.LSTM(
-        
-#batch_first – If True, then the input and output tensors are provided as (batch, seq, feature))
 
+# batch_first – If True, then the input and output tensors are provided as (batch, seq, feature))
