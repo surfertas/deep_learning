@@ -15,15 +15,24 @@ from torch.autograd import Variable
 from torch.utils.data import Dataset, DataLoader, ConcatDataset
 from torchvision import transforms, utils
 
+
 # used for logging to TensorBoard
 from tensorboard_logger import configure, log_value
 
 from data_loader import *
+from data_transforms import *
 from pilot_net import *
 
 import math
 
 
+def get_device_stats():
+    print("Device count: {}".format(torch.cuda.device_count()))
+    # only can use from PyTorch v0.4
+    #print("Max_memory_allocated: {}".format(torch.cuda.max_memory_allocated()))
+    #print("Max_memory_cached: {}".format(torch.cuda.max_memory_cached()))
+    #print("Memory_allocated: {}".format(torch.cuda.memory_allocated()))
+    
 
 def train_one_epoch(epoch, model, loss_fn, optimizer, train_loader):
     model.train()
@@ -90,7 +99,7 @@ def test(model, loss_fn, optimizer, test_loader):
         "steer_pred": np.array(predicts).astype('float')
     }
 
-    with open("pyt_predictions_test.pickle", 'wb') as f:
+    with open("pyt_predictions_transfer.pickle", 'wb') as f:
         pickle.dump(data_dict, f)
         print("Predictions pickled...")
 
@@ -107,59 +116,17 @@ def create_dir(dir_name):
     if not os.path.isdir(dir_name):
         os.makedirs(dir_name)
 
-def imagenet_transforms():
-    channel_stats = dict(mean=[0.485, 0.456, 0.406],
-                         std=[0.229, 0.224, 0.225])
-    train_transforms = transforms.Compose([
-        transforms.ToPILImage(),
-        transforms.Resize(256),
-        transforms.CenterCrop(224),
-        transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4, hue=0.1),
-        transforms.ToTensor(),
-        transforms.Normalize(**channel_stats)
-    ])
-
-    eval_transforms = transforms.Compose([
-        transforms.ToPILImage(),
-        transforms.Resize(256),
-        transforms.CenterCrop(224),
-        transforms.ToTensor(),
-        transforms.Normalize(**channel_stats)
-    ])
-
-    return {
-        'train_transforms': train_transforms,
-        'eval_transforms': eval_transforms,
-    } 
-
-def pilotnet_transforms():
-    train_transforms = transforms.Compose([
-        transforms.ToPILImage(),
-        transforms.Resize((66, 200)),
-        transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4, hue=0.1),
-        transforms.ToTensor()
-    ])
-
-    eval_transforms = transforms.Compose([
-        transforms.ToPILImage(),
-        transforms.Resize((66, 200)),
-        transforms.ToTensor()
-    ])
-    return {
-        'train_transforms': train_transforms,
-        'eval_transforms': eval_transforms,
-    } 
-
 
 def main():
-    bags = ['bag1', 'bag2']#, 'bag4', 'bag5', 'bag6']
+    bags = ['bag1', 'bag2', 'bag4', 'bag5', 'bag6']
     root_dir = r'/home/ubuntu/ws/deep_learning/projects/self_driving_car/1-pilot_net/data'
     ckpt_path = os.path.join(root_dir, 'output')#checkpoint.pth.tar')
     log_path = os.path.join(root_dir, 'log')
     
     create_dir(ckpt_path)
     create_dir(log_path)
-
+    
+    print(get_device_stats())
     # Configure tensorboard log dir
     configure(os.path.join(root_dir, 'log'))
 
