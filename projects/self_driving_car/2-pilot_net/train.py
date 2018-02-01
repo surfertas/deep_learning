@@ -33,6 +33,26 @@ def get_device_stats():
     # print("Max_memory_cached: {}".format(torch.cuda.max_memory_cached()))
     # print("Memory_allocated: {}".format(torch.cuda.memory_allocated()))
 
+def train_one_epoch_sequence(epoch, model, loss_fn, optimizer, train_loader):
+    model.train()
+    print("Epoch {} starting.".format(epoch))
+    epoch_loss = 0
+    for batch in train_loader:
+        data, target = torch.squeeze(torch.stack(batch['image'])).cuda(), batch['steer'].cuda()
+        data = Variable(data).type(torch.cuda.FloatTensor)
+        target = Variable(target).type(torch.cuda.FloatTensor)
+
+        predict = model(data)
+        loss = loss_fn(predict, target)
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        epoch_loss += loss.data[0]
+
+    epoch_loss /= len(train_loader.dataset)
+    print("Epoch {:.4f}: Train set: Average loss: {:.6f}\t".format(epoch, epoch_loss))
+    log_value('train_loss', epoch_loss, epoch)
 
 def train_one_epoch(epoch, model, loss_fn, optimizer, train_loader):
     model.train()
@@ -99,7 +119,7 @@ def test(model, loss_fn, optimizer, test_loader):
         "steer_pred": np.array(predicts).astype('float')
     }
 
-    with open("pyt_predictions_transfer.pickle", 'wb') as f:
+    with open("pyt_predictions_lstm.pickle", 'wb') as f:
         pickle.dump(data_dict, f)
         print("Predictions pickled...")
 
@@ -124,7 +144,7 @@ def main():
     torch.manual_seed(0)
 
     # Set bags and file paths.
-    bags = ['bag1', 'bag2', 'bag4', 'bag5', 'bag6']
+    bags = ['bag1']#, 'bag2', 'bag4', 'bag5', 'bag6']
     root_dir = r'/home/ubuntu/ws/deep_learning/projects/self_driving_car/1-pilot_net/data'
     ckpt_path = os.path.join(root_dir, 'output')  # checkpoint.pth.tar')
     log_path = os.path.join(root_dir, 'log')
@@ -173,8 +193,8 @@ def main():
     print("Model setup...")
 
     # Train
-    for epoch in range(15):
-        train_one_epoch(epoch, model, loss_fn, optimizer, train_loader)
+    for epoch in range(3):
+        train_one_epoch_sequence(epoch, model, loss_fn, optimizer, train_loader)
         ave_valid_loss = validate(epoch, model, loss_fn, optimizer, valid_loader)
 
         is_best = True  # Save checkpoint every epoch for now.

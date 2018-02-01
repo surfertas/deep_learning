@@ -108,11 +108,11 @@ class PilotNetAlexNetTransfer(nn.Module):
 # Fine tuning from intermediate layer:
 # https://discuss.pytorch.org/t/how-to-extract-features-of-an-image-from-a-trained-model/119/3
 
-class PilotNetCNNLSTM(object):
+class PilotNetCNNLSTM(nn.Module):
     # Note not an CLSTM. Using CNN to extract features and feed into LSTM.
 
     def __init__(self):
-        super(PilotNetLSTM, self).__init__()
+        super(PilotNetCNNLSTM, self).__init__()
         self.features = AlexNetConv4()
         self.fc1 = nn.Linear(43264, 1024)
         self.fc2 = nn.Linear(1024, 50)
@@ -123,12 +123,12 @@ class PilotNetCNNLSTM(object):
     def forward(self, x):
         sequence = []
         for step in x:
-            self.features(x)
-            x = x.view(x.size(0), -1)
-            x = F.relu(self.fc1(x))
-            x = F.tanh(F.self.fc2(x))
-            sequence.append(x)
-
+            out  = self.features(step)
+            out = out.view(out.size(0), -1)
+            out = F.relu(self.fc1(out))
+            out = F.tanh(self.fc2(out))
+            sequence.append(out)
+        sequence = torch.squeeze(torch.stack(sequence))
         out, h = self.rnn(sequence)
         return out
 
