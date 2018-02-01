@@ -42,7 +42,7 @@ def train_one_epoch_sequence(epoch, model, loss_fn, optimizer, train_loader):
         data = Variable(data).type(torch.cuda.FloatTensor)
         target = Variable(target).type(torch.cuda.FloatTensor)
 
-        predict = model(data)
+        predict = model(data)[-1]
         loss = loss_fn(predict, target)
         optimizer.zero_grad()
         loss.backward()
@@ -53,6 +53,53 @@ def train_one_epoch_sequence(epoch, model, loss_fn, optimizer, train_loader):
     epoch_loss /= len(train_loader.dataset)
     print("Epoch {:.4f}: Train set: Average loss: {:.6f}\t".format(epoch, epoch_loss))
     log_value('train_loss', epoch_loss, epoch)
+
+def validate_sequence(epoch, model, loss_fn, optimizer, valid_loader):
+    model.eval()
+    valid_loss = 0
+    for batch in valid_loader:
+        data, target = torch.stack(batch['image']).cuda(), batch['steer'].cuda()
+        data = Variable(data, volatile=True).type(torch.cuda.FloatTensor)
+        target = Variable(target).type(torch.cuda.FloatTensor)
+        predict = model(data, train=False)[-1]
+        valid_loss += loss_fn(predict, target).data[0]  # sum up batch loss
+
+    valid_loss /= len(valid_loader.dataset)
+    print('Valid set: Average loss: {:.6f}\n'.format(valid_loss))
+    log_value('valid_loss', valid_loss, epoch)
+    return valid_loss
+
+
+def test_sequence(model, loss_fn, optimizer, test_loader):
+    model.eval()
+    images = []
+    targets = []
+    predicts = []
+    test_loss = 0
+    for batch in test_loader:
+        data, target = torch.stack(batch['image']).cuda(), batch['steer'].cuda()
+        data = Variable(data, volatile=True).type(torch.cuda.FloatTensor)
+        target = Variable(target).type(torch.cuda.FloatTensor)
+        output = model(data, train=False)[-1]
+        test_loss += loss_fn(output, target).data[0]  # sum up batch loss
+
+        # Store image path as raw image too large.
+        images.append(batch['image_path'])
+        targets.append(target.data.cpu().numpy())
+        predicts.append(output.data.cpu().numpy())
+
+    test_loss /= len(test_loader.dataset)
+    print('Test set: Average loss: {:.4f}\n'.format(test_loss))
+
+    data_dict = {
+        "image": np.array(images),
+        "steer_target": np.array(targets).astype('float'),
+        "steer_pred": np.array(predicts).astype('float')
+    }
+
+    with open("pyt_predictions_lstm.pickle", 'wb') as f:
+        pickle.dump(data_dict, f)
+        print("Predictions pickled...")
 
 def train_one_epoch(epoch, model, loss_fn, optimizer, train_loader):
     model.train()
@@ -144,7 +191,7 @@ def main():
     torch.manual_seed(0)
 
     # Set bags and file paths.
-    bags = ['bag1']#, 'bag2', 'bag4', 'bag5', 'bag6']
+    bags = ['bag1', 'bag2', 'bag4', 'bag5', 'bag6']
     root_dir = r'/home/ubuntu/ws/deep_learning/projects/self_driving_car/1-pilot_net/data'
     ckpt_path = os.path.join(root_dir, 'output')  # checkpoint.pth.tar')
     log_path = os.path.join(root_dir, 'log')
@@ -193,9 +240,9 @@ def main():
     print("Model setup...")
 
     # Train
-    for epoch in range(3):
+    for epoch in range(15):
         train_one_epoch_sequence(epoch, model, loss_fn, optimizer, train_loader)
-        ave_valid_loss = validate(epoch, model, loss_fn, optimizer, valid_loader)
+        ave_valid_loss = validate_sequence(epoch, model, loss_fn, optimizer, valid_loader)
 
         is_best = True  # Save checkpoint every epoch for now.
 
@@ -206,7 +253,7 @@ def main():
         }, is_best, os.path.join(ckpt_path, 'checkpoint.pth.tar'))
 
     # Test
-    test(model, loss_fn, optimizer, valid_loader)
+    test_sequence(model, loss_fn, optimizer, valid_loader)
 
 if __name__ == "__main__":
     main()

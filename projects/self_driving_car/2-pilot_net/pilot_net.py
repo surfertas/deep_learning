@@ -117,10 +117,10 @@ class PilotNetCNNLSTM(nn.Module):
         self.fc1 = nn.Linear(43264, 1024)
         self.fc2 = nn.Linear(1024, 50)
 
-        self.rnn = nn.LSTM(50, hidden_size=50, num_layers=2, dropout=0, batch_first=True)
+        self.rnn = nn.LSTM(50, hidden_size=1, num_layers=2, dropout=0, batch_first=True)
 
 
-    def forward(self, x):
+    def forward(self, x, train=True):
         sequence = []
         for step in x:
             out  = self.features(step)
@@ -128,7 +128,12 @@ class PilotNetCNNLSTM(nn.Module):
             out = F.relu(self.fc1(out))
             out = F.tanh(self.fc2(out))
             sequence.append(out)
-        sequence = torch.squeeze(torch.stack(sequence))
+        if train:
+            sequence = torch.squeeze(torch.stack(sequence))
+        else:
+            # If validation or test, sample is 1, need to adjust dimensions.
+            sequence = torch.stack(sequence)
+
         out, h = self.rnn(sequence)
         return out
 

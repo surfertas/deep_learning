@@ -96,7 +96,13 @@ class SequenceDriveDataset(Dataset):
             )
             images.append(io.imread(img_name))
         target = self._frames['angle'].iloc[idx]
-        sample = {'image': images, 'steer': target}
+        # 'image_path' is path to image at time t (need for testing and
+        # visualization. (see test_sequence() in train.py)
+        sample = {
+            'image': images,
+            'image_path': self._frames['filename'].iloc[idx],
+            'steer': target
+        }
 
         if self._transform is not None:
             transformed = []
