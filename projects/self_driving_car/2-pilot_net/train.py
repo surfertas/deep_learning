@@ -119,6 +119,11 @@ def create_dir(dir_name):
 
 
 def main():
+    # Set random seed to 0
+    np.random.seed(0)
+    torch.manual_seed(0)
+
+    # Set bags and file paths.
     bags = ['bag1', 'bag2', 'bag4', 'bag5', 'bag6']
     root_dir = r'/home/ubuntu/ws/deep_learning/projects/self_driving_car/1-pilot_net/data'
     ckpt_path = os.path.join(root_dir, 'output')  # checkpoint.pth.tar')
@@ -134,10 +139,12 @@ def main():
     train_csv_file = r'train_interpolated.csv'
     valid_csv_file = r'valid_interpolated.csv'
 
+    # Get transforms
     transforms = imagenet_transforms()
     train_transforms = transforms['train_transforms']
     pre_process = transforms['eval_transforms']
 
+    # Set up data.
     train_data_aug = DriveDataset(train_csv_file, root_dir, bags, train_transforms)
     train_data_orig = DriveDataset(train_csv_file, root_dir, bags, pre_process)
     train_data = ConcatDataset([train_data_orig, train_data_aug])
@@ -150,6 +157,7 @@ def main():
     valid_loader = DataLoader(valid_data, batch_size=1, shuffle=False, num_workers=1)
     print("Data loaded...")
 
+    # Initiate model.
     model = PilotNetAlexNetTransfer().cuda()
 
     resume = False  # set to false for now.
@@ -157,10 +165,12 @@ def main():
         state_dict = torch.load(ckpt_path)
         model.load_state_dict(state_dict)
 
+    # Set up optimizer and define loss function.
     optimizer = torch.optim.Adam(model.parameters())
     loss_fn = nn.MSELoss()
     print("Model setup...")
 
+    # Train
     for epoch in range(15):
         train_one_epoch(epoch, model, loss_fn, optimizer, train_loader)
         ave_valid_loss = validate(epoch, model, loss_fn, optimizer, valid_loader)
@@ -173,6 +183,7 @@ def main():
             'optimizer': optimizer.state_dict()
         }, is_best, os.path.join(ckpt_path, 'checkpoint.pth.tar'))
 
+    # Test
     test(model, loss_fn, optimizer, valid_loader)
 
 if __name__ == "__main__":
