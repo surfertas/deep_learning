@@ -145,20 +145,22 @@ def main():
     pre_process = transforms['eval_transforms']
 
     # Set up data.
-    train_data_aug = DriveDataset(train_csv_file, root_dir, bags, train_transforms)
-    train_data_orig = DriveDataset(train_csv_file, root_dir, bags, pre_process)
+    time_step = 10
+    train_data_aug = SequenceDriveDataset(train_csv_file, root_dir, bags, time_step, train_transforms)
+    train_data_orig = SequenceDriveDataset(train_csv_file, root_dir, bags, time_step, pre_process)
     train_data = ConcatDataset([train_data_orig, train_data_aug])
 
     print("Train data size: {}".format(len(train_data)))
     train_loader = DataLoader(train_data, batch_size=64, shuffle=True, num_workers=4)
 
-    valid_data = DriveDataset(valid_csv_file, root_dir, bags, pre_process)
+    valid_data = SequenceDriveDataset(valid_csv_file, root_dir, bags, time_step, pre_process)
     print("Valid data size: {}".format(len(valid_data)))
     valid_loader = DataLoader(valid_data, batch_size=1, shuffle=False, num_workers=1)
     print("Data loaded...")
 
     # Initiate model.
-    model = PilotNetAlexNetTransfer().cuda()
+    # model = PilotNetAlexNetTransfer().cuda()
+    model = PilotNetCNNLSTM().cuda()
 
     resume = False  # set to false for now.
     if resume:
