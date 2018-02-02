@@ -240,7 +240,7 @@ def main():
     print("Model setup...")
 
     # Train
-    for epoch in range(10):
+    for epoch in range(5):
         train_one_epoch_sequence(epoch, model, loss_fn, optimizer, train_loader)
         ave_valid_loss = validate_sequence(epoch, model, loss_fn, optimizer, valid_loader)
 
