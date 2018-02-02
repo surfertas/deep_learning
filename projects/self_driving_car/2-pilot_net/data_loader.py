@@ -1,5 +1,5 @@
 # @author Tasuku Miura
-# @brief PyTorch implementation of PilotNet (Assumes CUDA enabled)
+# @brief Datasets using Pytorch Dataset API (Assumes CUDA enabled)
 
 import os
 import pickle
@@ -24,13 +24,9 @@ import copy
 
 
 class DriveDataset(Dataset):
-
     """
-
     Custom dataset to handle Udacity drive data.
-
     """
-
     def __init__(self, csv_file, root_dir, bags, transform=None):
         self._csv_file = csv_file
         self._root_dir = root_dir
@@ -69,20 +65,17 @@ class DriveDataset(Dataset):
 
 
 class SequenceDriveDataset(Dataset):
-
     """
-
     Custom dataset to convert Udacity drive data to inputs of sequences.
 
     """
-
     def __init__(self, csv_file, root_dir, bags, time_steps, transform=None):
         self._csv_file = csv_file
         self._root_dir = root_dir
         self._bags = bags
         self._steps = time_steps + 1  # +1 to adjust for indexing
         self._transform = transform
-        self._frames = self.get_frames()
+        self._frames = self._get_frames()
 
     def __len__(self):
         return len(self._frames)
@@ -114,7 +107,7 @@ class SequenceDriveDataset(Dataset):
 
         return sample
 
-    def get_frames(self):
+    def _get_frames(self):
         file_paths = [
             (bag, os.path.join(self._root_dir, bag, self._csv_file))
             for bag in self._bags

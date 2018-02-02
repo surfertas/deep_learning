@@ -17,6 +17,7 @@ from torchvision import transforms, utils
 
 
 def imagenet_transforms():
+    """ Transforms for imagenet trained models. """
     channel_stats = dict(mean=[0.485, 0.456, 0.406],
                          std=[0.229, 0.224, 0.225])
     train_transforms = transforms.Compose([
@@ -43,6 +44,7 @@ def imagenet_transforms():
 
 
 def pilotnet_transforms():
+    """ Transforms for pilotnet """
     train_transforms = transforms.Compose([
         transforms.ToPILImage(),
         transforms.Resize((66, 200)),
