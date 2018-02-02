@@ -43,7 +43,7 @@ def train_one_epoch_sequence(epoch, model, loss_fn, optimizer, train_loader):
         data = Variable(data).type(torch.cuda.FloatTensor)
         target = Variable(target).type(torch.cuda.FloatTensor)
 
-        predict = model(data)[-1]
+        predict = model(data)
         loss = loss_fn(predict, target)
         optimizer.zero_grad()
         loss.backward()
@@ -63,7 +63,7 @@ def validate_sequence(epoch, model, loss_fn, optimizer, valid_loader):
         data, target = torch.stack(batch['image']).cuda(), batch['steer'].cuda()
         data = Variable(data, volatile=True).type(torch.cuda.FloatTensor)
         target = Variable(target).type(torch.cuda.FloatTensor)
-        predict = model(data, train=False)[-1]
+        predict = model(data, train=False)
         valid_loss += loss_fn(predict, target).data[0]  # sum up batch loss
 
     valid_loss /= len(valid_loader.dataset)
@@ -82,7 +82,7 @@ def test_sequence(model, loss_fn, optimizer, test_loader):
         data, target = torch.stack(batch['image']).cuda(), batch['steer'].cuda()
         data = Variable(data, volatile=True).type(torch.cuda.FloatTensor)
         target = Variable(target).type(torch.cuda.FloatTensor)
-        output = model(data, train=False)[-1]
+        output = model(data, train=False)
         test_loss += loss_fn(output, target).data[0]  # sum up batch loss
 
         # Store image path as raw image too large.
@@ -194,7 +194,7 @@ def main():
     torch.manual_seed(0)
 
     # Set bags and file paths.
-    bags = ['bag1', 'bag2']  # , 'bag4', 'bag5', 'bag6']
+    bags = ['bag1']#, 'bag2']  # , 'bag4', 'bag5', 'bag6']
     root_dir = r'/home/ubuntu/ws/deep_learning/projects/self_driving_car/1-pilot_net/data'
     ckpt_path = os.path.join(root_dir, 'output')  # checkpoint.pth.tar')
     log_path = os.path.join(root_dir, 'log')
