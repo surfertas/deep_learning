@@ -100,7 +100,9 @@ class SequenceDriveDataset(Dataset):
         # visualization. (see test_sequence() in train.py)
         sample = {
             'image': images,
-            'image_path': self._frames['filename'].iloc[idx],
+            'image_path': os.path.join(
+                self._root_dir,
+                self._frames['filename'].iloc[idx]),
             'steer': target
         }
 
