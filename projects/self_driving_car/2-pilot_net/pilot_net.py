@@ -7,9 +7,11 @@ import torch.nn.functional as F
 
 
 class PilotNet(nn.Module):
+
     """
     PilotNet per Nvidia paper.
     """
+
     def __init__(self):
         super(PilotNet, self).__init__()
         self.conv1 = nn.Conv2d(3, 24, kernel_size=5, stride=2, padding=0)
@@ -38,9 +40,11 @@ class PilotNet(nn.Module):
 
 
 class PilotNetBn(nn.Module):
+
     """
     PilotNet with Batch Normalization.
     """
+
     def __init__(self):
         super(PilotNetBn, self).__init__()
         self.conv1 = nn.Conv2d(3, 24, kernel_size=5, stride=2, padding=0)
@@ -77,9 +81,11 @@ from torchvision import models
 
 
 class AlexNetConv4(nn.Module):
+
     """
     Use conv layers as feature extractor.
     """
+
     def __init__(self):
         super(AlexNetConv4, self).__init__()
         self.alexnet = models.alexnet(pretrained=True)
@@ -95,10 +101,12 @@ class AlexNetConv4(nn.Module):
 
 
 class PilotNetAlexNetTransfer(nn.Module):
+
     """
     Fine tuning with AlexNet. Remove classification layers (basically all the fc
     layers) and retrain for regression.
     """
+
     def __init__(self):
         super(PilotNetAlexNetTransfer, self).__init__()
         self.features = AlexNetConv4()
@@ -117,11 +125,14 @@ class PilotNetAlexNetTransfer(nn.Module):
 # Fine tuning from intermediate layer:
 # https://discuss.pytorch.org/t/how-to-extract-features-of-an-image-from-a-trained-model/119/3
 
+
 class PilotNetCNNLSTM(nn.Module):
     # Note not an CLSTM. Using CNN to extract features and feed into LSTM.
+
     """
     Use CNN to extract features and pass to LSTM.
     """
+
     def __init__(self):
         super(PilotNetCNNLSTM, self).__init__()
         self.features = AlexNetConv4()
@@ -132,7 +143,7 @@ class PilotNetCNNLSTM(nn.Module):
     def forward(self, x, train=True):
         sequence = []
         for step in x:
-            out  = self.features(step)
+            out = self.features(step)
             out = out.view(out.size(0), -1)
             out = F.relu(self.fc1(out))
             out = F.tanh(self.fc2(out))
@@ -146,7 +157,5 @@ class PilotNetCNNLSTM(nn.Module):
         out, h = self.rnn(sequence)
         return out
 
-        
-            
 
 # batch_first – If True, then the input and output tensors are provided as (batch, seq, feature))

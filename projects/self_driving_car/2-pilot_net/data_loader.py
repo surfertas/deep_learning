@@ -24,9 +24,11 @@ import copy
 
 
 class DriveDataset(Dataset):
+
     """
     Custom dataset to handle Udacity drive data.
     """
+
     def __init__(self, csv_file, root_dir, bags, transform=None):
         self._csv_file = csv_file
         self._root_dir = root_dir
@@ -65,10 +67,12 @@ class DriveDataset(Dataset):
 
 
 class SequenceDriveDataset(Dataset):
+
     """
     Custom dataset to convert Udacity drive data to inputs of sequences.
 
     """
+
     def __init__(self, csv_file, root_dir, bags, time_steps, transform=None):
         self._csv_file = csv_file
         self._root_dir = root_dir

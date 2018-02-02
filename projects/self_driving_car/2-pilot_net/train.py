@@ -33,6 +33,7 @@ def get_device_stats():
     # print("Max_memory_cached: {}".format(torch.cuda.max_memory_cached()))
     # print("Memory_allocated: {}".format(torch.cuda.memory_allocated()))
 
+
 def train_one_epoch_sequence(epoch, model, loss_fn, optimizer, train_loader):
     model.train()
     print("Epoch {} starting.".format(epoch))
@@ -53,6 +54,7 @@ def train_one_epoch_sequence(epoch, model, loss_fn, optimizer, train_loader):
     epoch_loss /= len(train_loader.dataset)
     print("Epoch {:.4f}: Train set: Average loss: {:.6f}\t".format(epoch, epoch_loss))
     log_value('train_loss', epoch_loss, epoch)
+
 
 def validate_sequence(epoch, model, loss_fn, optimizer, valid_loader):
     model.eval()
@@ -100,6 +102,7 @@ def test_sequence(model, loss_fn, optimizer, test_loader):
     with open("pyt_predictions_lstm.pickle", 'wb') as f:
         pickle.dump(data_dict, f)
         print("Predictions pickled...")
+
 
 def train_one_epoch(epoch, model, loss_fn, optimizer, train_loader):
     model.train()
@@ -191,7 +194,7 @@ def main():
     torch.manual_seed(0)
 
     # Set bags and file paths.
-    bags = ['bag1', 'bag2']#, 'bag4', 'bag5', 'bag6']
+    bags = ['bag1', 'bag2']  # , 'bag4', 'bag5', 'bag6']
     root_dir = r'/home/ubuntu/ws/deep_learning/projects/self_driving_car/1-pilot_net/data'
     ckpt_path = os.path.join(root_dir, 'output')  # checkpoint.pth.tar')
     log_path = os.path.join(root_dir, 'log')
