@@ -191,7 +191,7 @@ def main():
     torch.manual_seed(0)
 
     # Set bags and file paths.
-    bags = ['bag1', 'bag2', 'bag4', 'bag5', 'bag6']
+    bags = ['bag1', 'bag2']#, 'bag4', 'bag5', 'bag6']
     root_dir = r'/home/ubuntu/ws/deep_learning/projects/self_driving_car/1-pilot_net/data'
     ckpt_path = os.path.join(root_dir, 'output')  # checkpoint.pth.tar')
     log_path = os.path.join(root_dir, 'log')
@@ -212,7 +212,7 @@ def main():
     pre_process = transforms['eval_transforms']
 
     # Set up data.
-    time_step = 10
+    time_step = 5
     train_data_aug = SequenceDriveDataset(train_csv_file, root_dir, bags, time_step, train_transforms)
     train_data_orig = SequenceDriveDataset(train_csv_file, root_dir, bags, time_step, pre_process)
     train_data = ConcatDataset([train_data_orig, train_data_aug])
@@ -240,7 +240,7 @@ def main():
     print("Model setup...")
 
     # Train
-    for epoch in range(15):
+    for epoch in range(10):
         train_one_epoch_sequence(epoch, model, loss_fn, optimizer, train_loader)
         ave_valid_loss = validate_sequence(epoch, model, loss_fn, optimizer, valid_loader)
 

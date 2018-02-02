@@ -115,9 +115,9 @@ class PilotNetCNNLSTM(nn.Module):
         super(PilotNetCNNLSTM, self).__init__()
         self.features = AlexNetConv4()
         self.fc1 = nn.Linear(43264, 1024)
-        self.fc2 = nn.Linear(1024, 50)
+        self.fc2 = nn.Linear(1024, 100)
 
-        self.rnn = nn.LSTM(50, hidden_size=1, num_layers=2, dropout=0, batch_first=True)
+        self.rnn = nn.LSTM(100, hidden_size=1, num_layers=2, dropout=0, batch_first=True)
 
 
     def forward(self, x, train=True):
@@ -126,7 +126,7 @@ class PilotNetCNNLSTM(nn.Module):
             out  = self.features(step)
             out = out.view(out.size(0), -1)
             out = F.relu(self.fc1(out))
-            out = F.tanh(self.fc2(out))
+            out = self.fc2(out)
             sequence.append(out)
         if train:
             sequence = torch.squeeze(torch.stack(sequence))
