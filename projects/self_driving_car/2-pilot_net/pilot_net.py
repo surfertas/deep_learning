@@ -135,18 +135,21 @@ class PilotNetCNNLSTM(nn.Module):
 
     def __init__(self):
         super(PilotNetCNNLSTM, self).__init__()
-        self.features = AlexNetConv4()
-        self.fc1 = nn.Linear(43264, 1024)
-        self.fc2 = nn.Linear(1024, 100)
-        self.rnn = nn.LSTM(100, hidden_size=1, num_layers=2, dropout=0.2, batch_first=True)
+        self.alexnet = models.alexnet(pretrained=True)
+        self.cnn = nn.Sequential(*list(self.alexnet.children())[:-1])
+        self.rnn = nn.LSTM(9216, hidden_size=512, num_layers=2, dropout=0.2, batch_first=True)
+        self.fc = nn.Sequential(
+            nn.Linear(512, 64),
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            nn.Linear(64, 1)
+        )
 
     def forward(self, x, train=True):
         sequence = []
-        for step in x:
-            out = self.features(step)
+        for feature in x:
+            out = self.cnn(feature)
             out = out.view(out.size(0), -1)
-            out = F.relu(self.fc1(out))
-            out = F.tanh(self.fc2(out))
             sequence.append(out)
         if train:
             sequence = torch.squeeze(torch.stack(sequence))
@@ -155,7 +158,7 @@ class PilotNetCNNLSTM(nn.Module):
             sequence = torch.stack(sequence)
 
         out, h = self.rnn(sequence)
-        return out
+        return self.fc(out[-1])
 
 
 # batch_first – If True, then the input and output tensors are provided as (batch, seq, feature))
