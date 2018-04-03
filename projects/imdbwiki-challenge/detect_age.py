@@ -75,10 +75,10 @@ def main():
             extensions.PlotReport(
                 ['main/loss', 'validation/main/loss'],
                 'epoch', file_name='loss.png'))
-            trainer.extend(
-                extensions.PlotReport(
-                    ['main/accuracy', 'validation/main/accuracy'],
-                    'epoch', file_name='accuracy.png'))
+        trainer.extend(
+            extensions.PlotReport(
+                ['main/accuracy', 'validation/main/accuracy'],
+                'epoch', file_name='accuracy.png'))
 
     # Run trainer
     trainer.run()

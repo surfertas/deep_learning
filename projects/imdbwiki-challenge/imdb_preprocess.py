@@ -110,7 +110,7 @@ def create_and_dump(imdb_dict, partial):
             'age_labels': np.array(age)
             }
 
-    print("Number of samples reduced to: {}".format(len(data['image_inputs']))
+    print("Number of samples reduced to: {}".format(len(data['image_inputs'])))
     with open(os.path.join(IMG_DIR,
             "pkl_folder/imdb_data_{}.pkl".format(partial)),
             'wb') as f:
