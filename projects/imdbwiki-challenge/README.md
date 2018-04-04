@@ -33,12 +33,6 @@ architecture introduced in the referenced paper.
 The scripts to download and prepare the data hopefully will be useful for
 others.
 
-### Usage
-To see sample usage, just git clone and run below.
-```bash
-$ python detect_age.py --file_name imdb_data_50.pkl --gpu 0
-```
-
 If you want to generate the original data set, and set up environment for
 experimentation use the following.
 ```bash
@@ -50,5 +44,5 @@ $ ./fetch_crop.sh -o output_path
 $ python imdb_preprocess.py --n-samples 1000
 
 # initiate training
-$ python detect_age.py --file_name imdb_data_1000.pkl --gpu 0 --white True
+$ python train.py --file_path path_to_pickle --file_name imdb_data_1000.pkl --gpu 0 --white True
 ```
