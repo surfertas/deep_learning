@@ -34,18 +34,19 @@ others.
 ### Usage
 To see sample usage, just git clone and run below.
 ```bash
-python detect_age.py --file_name imdb_data_50.pkl --gpu 0
+$ python detect_age.py --file_name imdb_data_50.pkl --gpu 0
 ```
 
-If you want to generate own data set, and set up environment for
+If you want to generate the original data set, and set up environment for
 experimentation use the following.
 ```bash
 # downloads the relevant data from imdb-wiki site
-./fetch_crop.sh
+# will download the 7gb faces only data and associated meta file
+$ ./fetch_crop.sh
 
 # preprocesses the raw data using 1000 samples
-python imdb_preprocess.py --partial 1000
+$ python imdb_preprocess.py --n-samples 1000
 
 # initiate training
-python detect_age.py --file_name imdb_data_1000.pkl --gpu 0 --white True
+$ python detect_age.py --file_name imdb_data_1000.pkl --gpu 0 --white True
 ```
