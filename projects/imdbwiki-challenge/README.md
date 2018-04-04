@@ -10,8 +10,10 @@ image](https://www.vision.ee.ethz.ch/en/publications/papers/proceedings/eth_biwi
 
 related blog post:[surfertas notes](http://surfertas.github.io/deeplearning/2017/04/18/imdbwiki.html)
 
-Note: Completed as part of [Idein](https://idein.jp/) Residence Program
+Note: Completed as part of [Idein](https://idein.jp/) Residence Program (Apr/2017)
 
+Updated:
+Apr/2018 - Fixed bugs, implemented sampling of data.
 
 ### Introduction
 
@@ -41,7 +43,7 @@ If you want to generate the original data set, and set up environment for
 experimentation use the following.
 ```bash
 # downloads the relevant data from imdb-wiki site
-# will download the 7gb faces only data and associated meta file
+# NOTE: will only download the 7gb faces only data and associated meta file
 $ ./fetch_crop.sh -o output_path
 
 # preprocesses the raw data using 1000 samples
