@@ -69,14 +69,13 @@ def preprocess_test(data, components, mean):
 
 
 def get_data(fpath, fname, simple, white, split=0.3):
-    """
-    Gets data set, returns two array of tuples of (input, output).
+    """ Gets data set, returns two array of tuples of (input, output).
     Args:
         fpath - path to file.
         fname - name of file.
         simple - Determines if the simple classification is desired.
         split - parameter used to define training and testing subsets.
-    Rets:
+    Returns:
         train - train data set, subset of original data.
         test - test data set, subset of original data.
         hist - statistics related to age distribution.
@@ -95,6 +94,7 @@ def get_data(fpath, fname, simple, white, split=0.3):
     X = data['image_inputs']
     X = np.asarray(X, dtype=np.float32).reshape(-1, 1, 128, 128)
 
+    # Calculate the age distribution of the data.
     hist = np.histogram(Y, bins=bins, density=True)
 
     # Preprocess whitening
