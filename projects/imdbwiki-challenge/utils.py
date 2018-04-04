@@ -7,15 +7,12 @@ import chainer
 from scipy import linalg
 
 
-Age = {"YOUNG": 0,
-       "MIDDLE": 1,
-       "OLD": 2,
-       "VOLD": 3
-       }
-
-
-FILE_PATH = r'./data/pkl_folder'
-
+Age = {
+   "YOUNG": 0,
+   "MIDDLE": 1,
+   "OLD": 2,
+   "VOLD": 3
+}
 
 def classify_age(x):
     """
@@ -71,10 +68,11 @@ def preprocess_test(data, components, mean):
     return white
 
 
-def get_data(fname, simple, white, split=0.3):
+def get_data(fpath, fname, simple, white, split=0.3):
     """
     Gets data set, returns two array of tuples of (input, output).
     Args:
+        fpath - path to file.
         fname - name of file.
         simple - Determines if the simple classification is desired.
         split - parameter used to define training and testing subsets.
@@ -83,7 +81,7 @@ def get_data(fname, simple, white, split=0.3):
         test - test data set, subset of original data.
         hist - statistics related to age distribution.
     """
-    with open(os.path.join(FILE_PATH, fname), 'rb') as f:
+    with open(os.path.join(fpath, fname), 'rb') as f:
         data = pickle.load(f)
 
     if simple:

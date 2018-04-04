@@ -17,8 +17,9 @@ from chainer import datasets, iterators, optimizers
 from chainer import Chain
 from chainer.training import extensions
 from chainer.datasets import tuple_dataset
-from detect_age_data import get_data
-from detect_age_model import CNN
+
+import utils
+import models
 
 
 def main():
@@ -29,13 +30,16 @@ def main():
                         help='Number of times to train on data set')
     parser.add_argument('--gpu', '-g', type=int, default=-1,
                         help='GPU ID: -1 indicates CPU')
-    parser.add_argument('--file_name', '-f', type=str, default='imdb_data_2000.pkl',
+    parser.add_argument('--file-path', '-fp', type=str, default='/media/tasuku/Samsung_T3/workspace/imdb_data/imdb_crop/imdb_crop/pkl_folder',
+                        help='Path to pickle file')
+    parser.add_argument('--file-name', '-fn', type=str, default='imdb_data_50.pkl',
                         help='Data set (image, label)')
     parser.add_argument('--white', '-w', type=bool, default=False,
                         help='Preprocess whitening')
     args = parser.parse_args()
 
-    train, test, age_stats = get_data(
+    train, test, age_stats = utils.get_data(
+        args.file_path,
         args.file_name,
         simple=True,
         white=args.white,
@@ -47,7 +51,7 @@ def main():
     test_iter = chainer.iterators.SerialIterator(test, args.batch_size,
                                                  repeat=False, shuffle=False)
 
-    model = L.Classifier(CNN(4))
+    model = L.Classifier(models.CNN(4))
 
     if args.gpu >= 0:
         chainer.cuda.get_device(args.gpu).use()

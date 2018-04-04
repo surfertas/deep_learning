@@ -101,6 +101,7 @@ def create_and_dump(path_to_images, imdb_dict, n_samples):
 
     age = []
     imgs = []
+    # Filter out unusable data.
     for i, sface in enumerate(raw_sface):
         if not np.isnan(sface) and raw_age[i] >= 0:
             age.append(raw_age[i])
@@ -120,9 +121,16 @@ def create_and_dump(path_to_images, imdb_dict, n_samples):
     }
 
     print("Number of samples reduced to: {}".format(len(data['image_inputs'])))
-    with open(os.path.join(path_to_images,
-                           "pkl_folder/imdb_data_{}.pkl".format(n_samples)),
-              'wb') as f:
+    pkl_dir = os.path.join( path_to_images, "pkl_folder")
+
+    # If file dir doesnt exist create.
+    if not os.path.isdir(pkl_dir):
+        os.makedirs(pkl_dir)
+
+    # Pickle file
+    with open(os.path.join(
+        pkl_dir,
+        "imdb_data_{}.pkl".format(n_samples)), 'wb') as f:
         pickle.dump(data, f)
 
 
