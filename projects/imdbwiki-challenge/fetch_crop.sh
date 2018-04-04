@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
+# Script to download and untar the 7GB face only data and associated meta data
+# found at https://data.vision.ee.ethz.ch/cvl/rrothe/imdb-wiki/
 
-## TOOLs
+## tools
 FETCH=wget
 UNZIP=tar
 
@@ -32,26 +34,26 @@ function usage_exit () {
 }
 
 function download () {
-  local out=${1}
-  local url=${2}
+  local dir=${1}
+  local file=${2}
+  local url=${3}
 
   local fetch_flags=
   if [ $resume -ne 0 ]; then
     fetch_flags=-c
   fi
-  
-  ${FETCH} ${fetch_flags} -O ${outdir}/${out} ${url}
+ 
+  mkdir -p ${outdir}/${dir} 
+  ${FETCH} ${fetch_flags} -O ${outdir}/${dir}/${file} ${url}
 }
 
 function unwrap() {
-  local file=${1}
-  local dir=${2}
+  local dir=${1}
+  local file=${2}
+  local path_to_tar=${outdir}/${dir}
 
-  ${UNZIP} -xvf $file
-  mv ./$dir/* ./data 
-  rm -r $dir
-  rm $file
-  echo "Results placed in ./data"
+  ${UNZIP} -xvf ${path_to_tar}/$file -C ${path_to_tar}/
+  echo "File has been placed in ${path_to_tar}"
 }
 
 ## parse options
@@ -72,7 +74,10 @@ done
 
 ## IMDB
 # fetch imdb cropped dataset and meta
-#download imdb_crop.tar ${base_url}/imdb_crop.tar
-download imdb_meta.tar ${base_url}/imdb_meta.tar
-unwrap imdb_meta.tar imdb
-#unwrap imdb_crop.tar imdb_crop
+# download dir file_name url
+# uncomment to run
+
+download imdb_crop imdb_crop.tar ${base_url}/imdb_crop.tar
+#download meta imdb_meta.tar ${base_url}/imdb_meta.tar
+unwrap imdb_crop imdb_crop.tar
+#unwrap meta imdb_meta.tar 
