@@ -22,7 +22,7 @@ def classify_age(x):
     Used to classify the age to reduce the number of classifications
     used in the label for training.
     Args:
-            x: Age unit.
+        x - Age unit.
     """
     if x < 30:
         return Age["YOUNG"]
@@ -38,11 +38,11 @@ def preprocess_train(data):
     """
     Use ZCA Whitening for pre-process.
     Args:
-            data: training data to preprocess.
-    Rets:
-            components: components related to ZCA.
-            mean: mean of data set along axis=0.
-            whiten: whitened version of data.
+        data - training data to preprocess.
+    Returns:
+        components - components related to ZCA.
+        mean - mean of data set along axis=0.
+        whiten - whitened version of data.
     """
     data = np.reshape(data, (-1, 128 * 128 * 1))
     mean = np.mean(data, axis=0)
@@ -59,11 +59,11 @@ def preprocess_test(data, components, mean):
     """
     Use components and mean outputted by ZCA whitening on training data.
     Args:
-            data: test data to preprocess.
-            compenents: components from ZCA processing on training data.
-            mean: mean from training data.
-    Rets:
-            white: whitened test data.
+        data - test data to preprocess.
+        compenents - components from ZCA processing on training data.
+        mean - mean from training data.
+    Returns:
+        white - whitened test data.
     """
     mdata = np.reshape(data, (-1, 128 * 128 * 1))
     white = np.dot(mdata - mean, components.T)
@@ -75,13 +75,13 @@ def get_data(fname, simple, white, split=0.3):
     """
     Gets data set, returns two array of tuples of (input, output).
     Args:
-            fname: name of file.
-            simple: Determines if the simple classification is desired.
-            split: parameter used to define training and testing subsets.
+        fname - name of file.
+        simple - Determines if the simple classification is desired.
+        split - parameter used to define training and testing subsets.
     Rets:
-            train: train data set, subset of original data.
-            test: test data set, subset of original data.
-            hist: statistics related to age distribution.
+        train - train data set, subset of original data.
+        test - test data set, subset of original data.
+        hist - statistics related to age distribution.
     """
     with open(os.path.join(FILE_PATH, fname), 'rb') as f:
         data = pickle.load(f)

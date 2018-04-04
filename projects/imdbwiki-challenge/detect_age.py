@@ -35,7 +35,12 @@ def main():
                         help='Preprocess whitening')
     args = parser.parse_args()
 
-    train, test, age_stats = get_data(args.file_name, simple=True, white=args.white, split=0.3)
+    train, test, age_stats = get_data(
+        args.file_name,
+        simple=True,
+        white=args.white,
+        split=0.3
+    )
     print("Age distribution of data is : {}".format(age_stats))
 
     train_iter = chainer.iterators.SerialIterator(train, args.batch_size)
