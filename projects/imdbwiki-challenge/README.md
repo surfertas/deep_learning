@@ -42,7 +42,7 @@ experimentation use the following.
 ```bash
 # downloads the relevant data from imdb-wiki site
 # will download the 7gb faces only data and associated meta file
-$ ./fetch_crop.sh
+$ ./fetch_crop.sh -o output_path
 
 # preprocesses the raw data using 1000 samples
 $ python imdb_preprocess.py --n-samples 1000
