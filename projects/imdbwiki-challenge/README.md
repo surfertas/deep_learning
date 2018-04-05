@@ -43,6 +43,7 @@ $ ./fetch_crop.sh -o output_path
 # preprocesses the raw data using 1000 samples
 $ python imdb_preprocess.py --n-samples 1000
 
-# initiate training
+# initiate training using chainer implementation
+$ cd chainer
 $ python train.py --file_path path_to_pickle --file_name imdb_data_1000.pkl --gpu 0 --white True
 ```
