@@ -3,7 +3,6 @@
 import os
 import numpy as np
 import pickle
-import chainer
 from scipy import linalg
 
 
