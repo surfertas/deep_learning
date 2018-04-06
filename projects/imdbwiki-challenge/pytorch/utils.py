@@ -3,6 +3,7 @@
 import os
 import torch
 
+
 def save_checkpoint(state, file_name='/output/checkpoint.pth.tar'):
     """Save checkpoint if a new best is achieved"""
     print ("=> Saving a new best")

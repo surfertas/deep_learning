@@ -26,17 +26,17 @@ class IMDBFaces(Dataset):
 
     def __getitem__(self, idx):
         path = self._samples['image_inputs'].iloc[idx]
-        # Get image and resize as raw sizes not consistent. 
+        # Get image and resize as raw sizes not consistent.
         # Raw image is gray scale 0-1 float so need to convert.
         # Convert to int as PIL expects int.
         img = np.uint8(transform.resize(
-                io.imread(path, flatten=1),
+            io.imread(path, flatten=1),
                 (128, 128)
-        )*255)
+        ) * 255)
         # Convert to 3d, as model expects 3d.
         # img = np.asarray([img, img, img])
         img = gray2rgb(img)
-      
+
         if self._transform is not None:
             img = self._transform(img)
 
@@ -55,7 +55,7 @@ class IMDBFaces(Dataset):
         # Reduce the number of classes to simplify if _reduce_classes is true.
         if self._reduce_classes:
             labels_df = labels_df.age_labels.apply(self._classify_age)
-       
+
         df = pd.concat([img_df, labels_df], axis=1)
         return df
 
@@ -68,5 +68,3 @@ class IMDBFaces(Dataset):
             return 2
         else:
             return 3
-     
-       

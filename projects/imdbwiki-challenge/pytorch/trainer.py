@@ -41,7 +41,7 @@ def train_one_epoch(epoch, model, loss_fn, optimizer, train_loader):
 
     epoch_loss /= len(train_loader.dataset)
     print("Epoch {:.4f}: Train set: Average loss: {:.6f}\t".format(epoch, epoch_loss))
-    #log_value('train_loss', epoch_loss, epoch)
+    # log_value('train_loss', epoch_loss, epoch)
 
 
 def validate(epoch, model, loss_fn, optimizer, valid_loader):
@@ -56,10 +56,8 @@ def validate(epoch, model, loss_fn, optimizer, valid_loader):
 
     valid_loss /= len(valid_loader.dataset)
     print('Valid set: Average loss: {:.6f}\n'.format(valid_loss))
-    #log_value('valid_loss', valid_loss, epoch)
+    # log_value('valid_loss', valid_loss, epoch)
     return valid_loss
-
-
 
 
 def main(args):
@@ -77,7 +75,7 @@ def main(args):
     utils.create_dir(log_path)
 
     # Configure tensorboard log dir
-    #configure(os.path.join(args.root_dir, 'log'))
+    # configure(os.path.join(args.root_dir, 'log'))
 
     train_pickle_file = args.train_data
 
@@ -135,7 +133,7 @@ def main(args):
         model.load_state_dict(ckpt['state_dict'])
 
     # Set up optimizer and define loss function.
-    
+
     parameters = model.vgg16fe.classifier.parameters()
     optimizer = torch.optim.Adam(parameters)
     loss_fn = nn.CrossEntropyLoss()

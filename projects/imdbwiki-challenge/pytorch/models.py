@@ -5,6 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torchvision import models
 
+
 class VggFE(nn.Module):
 
     """
@@ -21,12 +22,12 @@ class VggFE(nn.Module):
 
         # Default sets requires_grad to true,
         # so final fc can be optimized.
-        num_ftrs = 512*7*7
+        num_ftrs = 512 * 7 * 7
         self.vgg16fe.classifier = nn.Sequential(
             nn.Linear(num_ftrs, 4096),
             nn.ReLU(True),
             nn.Dropout(),
-            nn.Linear(4096,512),
+            nn.Linear(4096, 512),
             nn.ReLU(True),
             nn.Dropout(),
             nn.Linear(512, num_classes),
