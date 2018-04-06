@@ -41,6 +41,7 @@ experimentation use the following.
 $ ./fetch_crop.sh -o output_path
 
 # preprocesses the raw data using 1000 samples
+# NOTE: If using Chainer models and trainer need to set --get-paths False 
 $ python imdb_preprocess.py --n-samples 1000
 
 # initiate training using chainer implementation
