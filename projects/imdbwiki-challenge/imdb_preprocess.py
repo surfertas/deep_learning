@@ -74,7 +74,7 @@ def matlab_to_numpy(path_to_meta, matlab_file, path_to_images):
     return imdb_dict
 
 
-def create_and_dump(path_to_images, imdb_dict, n_samples):
+def create_and_dump(get_paths, path_to_images, imdb_dict, n_samples):
     """ Creates dictionary of inputs and labels and pickles.
     Args:
         path_to_images - image dir.
@@ -100,23 +100,27 @@ def create_and_dump(path_to_images, imdb_dict, n_samples):
         raw_sface = raw_sface[isamples]
 
     age = []
-    imgs = []
+    img_paths = []
     # Filter out unusable data.
     for i, sface in enumerate(raw_sface):
-        if not np.isnan(sface) and raw_age[i] >= 0:
+        in_valid_age_range = (raw_age[i] >= 0 and raw_age[i] <= 100)
+        if not np.isnan(sface) and in_valid_age_range:
             age.append(raw_age[i])
-            imgs.append(raw_path[i])
+            img_paths.append(raw_path[i])
 
     # Convert images path to images.
     imgs = [
         np.asarray(spm.imresize(
-            spm.imread(img_path, flatten=1),
+            spm.imread(path, flatten=1),
             (128, 128)), dtype=np.float32)
-        for img_path in imgs
+        for path in img_paths
     ]
 
+    # Option to return paths to images or paths to images
+    input_features = img_paths if get_paths else imgs
+     
     data = {
-        'image_inputs': np.array(imgs),
+        'image_inputs': np.array(input_features),
         'age_labels': np.array(age)
     }
 
@@ -138,14 +142,17 @@ def main():
     parser = argparse.ArgumentParser(description='IMDB data reformat script.')
     parser.add_argument('--n-samples', '-n', type=int, default=50,
                         help='The number of samples to use.')
-    parser.add_argument('--path-to-meta', '-p2m', type=str, default='/media/tasuku/Samsung_T3/workspace/imdb_data/meta/imdb',
+    parser.add_argument('--path-to-meta', '-p2m', type=str, default='/media/ubuntu/Samsung_T3/workspace/imdb_data/meta/imdb',
                         help='Path to Matlab file.')
     parser.add_argument('--matlab-file', '-m', type=str, default='imdb.mat',
                         help='Matlab file.')
-    parser.add_argument('--path-to-images', '-p2i', type=str, default='/media/tasuku/Samsung_T3/workspace/imdb_data/imdb_crop/imdb_crop',
+    parser.add_argument('--path-to-images', '-p2i', type=str, default='/media/ubuntu/Samsung_T3/workspace/imdb_data/imdb_crop/imdb_crop',
                         help='Path to where the images have been saved.')
+    parser.add_argument('--get-paths', '-ip', type=bool, default=True,
+                        help='True if input features returned are paths to imagess.')
+   
     args = parser.parse_args()
-
+    print(args.get_paths)
     imdb_dict = matlab_to_numpy(
         args.path_to_meta,
         args.matlab_file,
@@ -154,7 +161,7 @@ def main():
     print("Dictionary created...")
 
     print("Converting {} samples. (0=all samples)".format(args.n_samples))
-    create_and_dump(args.path_to_images, imdb_dict, args.n_samples)
+    create_and_dump(args.get_paths, args.path_to_images, imdb_dict, args.n_samples)
 
     print("File dumped to imdb_data_{}.pkl.".format(args.n_samples))
 
