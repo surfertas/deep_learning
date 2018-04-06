@@ -155,7 +155,7 @@ def main(args):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='NN Controller')
+    parser = argparse.ArgumentParser(description='IMDB Wiki trainer for age classification.')
     parser.add_argument('--root-dir', type=str, default='.',
                         help='path to root')
     parser.add_argument('--ckpt-file-name', type=str, default='checkpoint.pth.tar',
