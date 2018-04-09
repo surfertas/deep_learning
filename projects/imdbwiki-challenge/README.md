@@ -13,7 +13,8 @@ related blog post:[surfertas notes](http://surfertas.github.io/deeplearning/2017
 Note: Completed as part of [Idein](https://idein.jp/) Residence Program (Apr/2017)
 
 Updated:
-Apr/2018 - Fixed bugs, implemented sampling of data.
+Apr/2018 - Fixed bugs, implemented sampling of data. Transition to Pytorch as
+main implementation.
 
 ### Introduction
 
@@ -44,8 +45,8 @@ $ ./fetch_crop.sh -o output_path
 # NOTE: If using Chainer models and trainer need to set --get-paths False 
 $ python imdb_preprocess.py --n-samples 1000
 
-# initiate training using chainer implementation
+# initiate training using pytorch implementation
 # MAKE SURE TO SPECIFY THE PATH as default is set for my personal use...
-$ cd chainer
-$ python train.py --file-path path_to_pickle --file-name imdb_data_1000.pkl --gpu 0 --white True
+$ cd pytorch
+$ python trainer.py --root-dir path_to_pickle --train-data imdb_data_1000.pkl
 ```
