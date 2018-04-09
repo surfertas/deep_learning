@@ -61,7 +61,9 @@ def validate(epoch, model, loss_fn, optimizer, valid_loader):
 
 
 def main(args):
-    args.cuda = not args.no_cuda and torch.cuda.is_available()
+    # Current implementation requires cuda.
+    cuda = torch.cuda.is_available()
+    assert(cuda)
 
     # Set random seed to 0
     np.random.seed(args.seed)
@@ -126,14 +128,12 @@ def main(args):
     # Initiate model.
     model = models.VggFE(num_classes).cuda()
 
-    resume = False  # set to false for now.
-    if resume:
+    if args.resume:
         print("Resuming from checkpoint")
         ckpt = torch.load(os.path.join(ckpt_path, args.ckpt_file_name))
         model.load_state_dict(ckpt['state_dict'])
 
     # Set up optimizer and define loss function.
-
     parameters = model.vgg16fe.classifier.parameters()
     optimizer = torch.optim.Adam(parameters)
     loss_fn = nn.CrossEntropyLoss()
@@ -158,10 +158,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='IMDB Wiki trainer for age classification.')
     parser.add_argument('--root-dir', type=str, default='.',
                         help='path to root')
-    parser.add_argument('--ckpt-file-name', type=str, default='checkpoint.pth.tar',
-                        help='name of checkpoint file')
     parser.add_argument('--train-data', type=str, default='predictions.pickle',
                         help='filename containing train data')
+    parser.add_argument('--ckpt-file-name', type=str, default='checkpoint.pth.tar',
+                        help='name of checkpoint file')
+    parser.add_argument('--resume', type=bool, default=False,
+                        help='Resume training from checkpoint')
     parser.add_argument('--reduce-age-classes', type=bool, default=True,
                         help='reduce the number of age classes')
     parser.add_argument('--train-valid-split', type=float, default='0.2',
@@ -172,8 +174,6 @@ if __name__ == "__main__":
                         help='input batch size for validation (default: 32)')
     parser.add_argument('--epochs', type=int, default=10, metavar='N',
                         help='number of epochs to train (default: 10)')
-    parser.add_argument('--no-cuda', action='store_true', default=False,
-                        help='disables CUDA training')
     parser.add_argument('--seed', type=int, default=0, metavar='S',
                         help='random seed (default: 0)')
     parser.add_argument('--log-interval', type=int, default=10, metavar='N',
