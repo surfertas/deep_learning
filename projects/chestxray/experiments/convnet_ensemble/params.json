@@ -1,0 +1,23 @@
+{
+    "experiment_name": "convnet_ensemble",
+    "learning_rate": 1e-3,
+    "batch_size": 32,
+    "num_epochs": 10,
+
+    "use_batch_norm": true,
+    "bn_momentum": 0.9,
+
+    "image_size": 224,
+    "num_channels": 3,
+
+    "use_random_flip": true,
+    "num_labels": 14,
+
+    "num_parallel_calls": 4,
+    "save_summary_steps": 1,
+
+    "dataset_size": 112120,
+    "train_ratio": 0.8,
+
+    "build_model_version": "build_model_0002"
+}
