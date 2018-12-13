@@ -1,4 +1,6 @@
 
+[Medical imaging: playing with the ChestXray-14 dataset](https://surfertas.github.io/deeplearning/2018/12/12/chestxray.html)
+
 1. activate environment and install necessary packages
 
 ```
