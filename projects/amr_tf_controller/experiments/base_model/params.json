@@ -1,0 +1,23 @@
+{
+    "experiment_name": "base_model",
+    "learning_rate": 1e-3,
+    "batch_size": 32,
+    "num_epochs": 10,
+
+    "use_batch_norm": true,
+    "bn_momentum": 0.9,
+
+    "image_size": 224,
+    "num_channels": 3,
+
+    "use_random_flip": true,
+    "num_features": 2,
+
+    "num_parallel_calls": 4,
+    "save_summary_steps": 1,
+
+    "dataset_size": 1000,
+    "train_ratio": 0.8,
+
+    "build_model_version": "base_model"
+}

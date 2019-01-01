@@ -1,0 +1,19 @@
+name: amr-core
+dependencies:
+  - cytoolz
+  - dask
+  - numpy
+  - pandas
+  - Pillow
+  - scipy
+  - scikit-image
+  - tensorflow>=1.7
+  - tensorflow-gpu
+  - tensorflow-hub
+  - tqdm
+  - toolz
+  - tabulate
+  - pip:
+    - tflearn
+    - google-cloud==0.32.0
+
