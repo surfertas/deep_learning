@@ -18,7 +18,7 @@ from model.training import train_and_evaluate
 parser = argparse.ArgumentParser()
 parser.add_argument('--model-dir', default='experiments/base_model',
                     help="Experiment directory containing params.json")
-parser.add_argument('--data-dir', default='data/raw-tfrecords',
+parser.add_argument('--data-dir', default='data/base_model',
                     help="Directory containing the dataset")
 parser.add_argument('--restore-from', default=None,
                     help="Optional, directory or file containing weights to reload before training")
