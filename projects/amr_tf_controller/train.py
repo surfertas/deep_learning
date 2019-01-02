@@ -16,7 +16,7 @@ from model.training import train_and_evaluate
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--model-dir', default='experiments/test',
+parser.add_argument('--model-dir', default='experiments/base_model',
                     help="Experiment directory containing params.json")
 parser.add_argument('--data-dir', default='data/raw-tfrecords',
                     help="Directory containing the dataset")
