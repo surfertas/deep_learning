@@ -15,6 +15,3 @@ $ export GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/sa_key.json
 4. Run
 ```
 $ python generate_csv_with_gcsurl.py
-```
-
-
