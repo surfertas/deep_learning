@@ -31,7 +31,7 @@ def train(model, optimizer, loss_fn, dataloader, metrics, params):
     Args:
         model: (torch.nn.Module) the neural network
         optimizer: (torch.optim) optimizer for parameters of model
-        loss_fn: a function that takes batch_output and batch_labels and computes the loss for the batch
+        loss_fn: a function that takes batch_output and batch_targets and computes the loss for the batch
         dataloader: (DataLoader) a torch.utils.data.DataLoader object that fetches training data
         metrics: (dict) a dictionary of functions that compute a metric using the output and labels of each batch
         params: (Params) hyperparameters
@@ -47,17 +47,17 @@ def train(model, optimizer, loss_fn, dataloader, metrics, params):
 
     # Use tqdm for progress bar
     with tqdm(total=len(dataloader)) as t:
-        for i, (train_batch, labels_batch) in enumerate(dataloader):
+        for i, (train_batch, targets_batch) in enumerate(dataloader):
             # move to GPU if available
             if params.cuda:
-                train_batch, labels_batch = train_batch.cuda(async=True), labels_batch.cuda(async=True)
+                train_batch, targets_batch = train_batch.cuda(async=True), targets_batch.cuda(async=True)
 
             # convert to torch Variables
-            train_batch, labels_batch = Variable(train_batch), Variable(labels_batch)
+            train_batch, targets_batch = Variable(train_batch), Variable(targets_batch)
 
             # compute model output and loss
             output_batch = model(train_batch)
-            loss = loss_fn(output_batch, labels_batch)
+            loss = loss_fn(output_batch, targets_batch)
 
             # clear previous gradients, compute gradients of all variables wrt loss
             optimizer.zero_grad()
@@ -70,16 +70,16 @@ def train(model, optimizer, loss_fn, dataloader, metrics, params):
             if i % params.save_summary_steps == 0:
                 # extract data from torch Variable, move to cpu, convert to numpy arrays
                 output_batch = output_batch.data.cpu().numpy()
-                labels_batch = labels_batch.data.cpu().numpy()
+                targets_batch = targets_batch.data.cpu().numpy()
 
                 # compute all metrics on this batch
-                summary_batch = {metric:metrics[metric](output_batch, labels_batch)
+                summary_batch = {metric:metrics[metric](output_batch, targets_batch)
                                  for metric in metrics}
-                summary_batch['loss'] = loss.data[0]
+                summary_batch['loss'] = loss.data.item()
                 summ.append(summary_batch)
 
             # update the average loss
-            loss_avg.update(loss.data[0])
+            loss_avg.update(loss.data.item())
 
             t.set_postfix(loss='{:05.3f}'.format(loss_avg()))
             t.update()
@@ -100,7 +100,7 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
         val_dataloader: (DataLoader) a torch.utils.data.DataLoader object that fetches validation data
         optimizer: (torch.optim) optimizer for parameters of model
         loss_fn: a function that takes batch_output and batch_labels and computes the loss for the batch
-        metrics: (dict) a dictionary of functions that compute a metric using the output and labels of each batch
+        metrics: (dict) a dictionary of functions that compute a metric using the output and targets of each batch
         params: (Params) hyperparameters
         model_dir: (string) directory containing config, weights and log
         restore_file: (string) optional- name of file to restore from (without its extension .pth.tar)
@@ -111,7 +111,7 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
         logging.info("Restoring parameters from {}".format(restore_path))
         utils.load_checkpoint(restore_path, model, optimizer)
 
-    best_val_acc = 0.0
+    best_val_rmse = np.inf
 
     for epoch in range(params.num_epochs):
         # Run one epoch
@@ -123,8 +123,8 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
         # Evaluate for one epoch on validation set
         val_metrics = evaluate(model, loss_fn, val_dataloader, metrics, params)
 
-        val_acc = val_metrics['accuracy']
-        is_best = val_acc>=best_val_acc
+        val_rmse = val_metrics['rmse']
+        is_best = val_rmse>=best_val_rmse
 
         # Save weights
         utils.save_checkpoint({'epoch': epoch + 1,
@@ -135,8 +135,8 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
 
         # If best_eval, best_save_path
         if is_best:
-            logging.info("- Found new best accuracy")
-            best_val_acc = val_acc
+            logging.info("- Found new best rmse")
+            best_val_rmse = val_rmse
 
             # Save best val metrics in a json file in the model directory
             best_json_path = os.path.join(model_dir, "metrics_val_best_weights.json")
@@ -181,7 +181,9 @@ if __name__ == '__main__':
     optimizer = optim.Adam(model.parameters(), lr=params.learning_rate)
 
     # fetch loss function and metrics
-    loss_fn = net.loss_fn
+    #loss_fn = net.loss_fn
+    loss_fn = torch.nn.MSELoss()
+
     metrics = net.metrics
 
     # Train the model

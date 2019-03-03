@@ -11,17 +11,13 @@ from PIL import Image
 from google.cloud import storage
 
 
-# borrowed from http://pytorch.org/tutorials/advanced/neural_style_tutorial.html
-# and http://pytorch.org/tutorials/beginner/data_loading_tutorial.html
-# define a training image loader that specifies transforms on images. See documentation for more details.
 train_transformer = transforms.Compose([
-    transforms.Resize(64),  # resize the image to 64x64 (remove if images are already 64x64)
-    transforms.RandomHorizontalFlip(),  # randomly flip image horizontally
+    transforms.Resize((124,124)),
     transforms.ToTensor()])  # transform it into a torch tensor
 
-# loader for evaluation, no horizontal flip
+# loader for evaluation, keep separate as transformer for train can be different
 eval_transformer = transforms.Compose([
-    transforms.Resize(64),  # resize the image to 64x64 (remove if images are already 64x64)
+    transforms.Resize((124,124)),  
     transforms.ToTensor()])  # transform it into a torch tensor
 
 class ControllerDataset(Dataset):
@@ -77,11 +73,13 @@ def fetch_dataloader(types, bucket_name, data_dir, csv_filename, params):
 
     # Split into train and eval
     n_train_eval = int(n_train * (1 - params.splits["val"]))
-    data_train = data_train[:n_train_eval]
+    data_train_new = data_train[:n_train_eval]
     data_eval = data_train[n_train_eval:]
-
+    print("size of data train set: {}".format(len(data_train_new)))
+    print("size of data val set: {}".format(len(data_eval)))
+    print("size of data test set: {}".format(len(data_test)))
     datasets = {
-        'train': data_train,
+        'train': data_train_new,
         'val': data_eval,
         'test': data_test}
 
