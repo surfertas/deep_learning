@@ -17,11 +17,13 @@ parser.add_argument('--data-dir', default='./data/gcs',
         help="Directory with gcs.csv")
 parser.add_argument('--gcs-filename', default='gcs.csv',
         help="Name of file with gcs urls")
+parser.add_argument('--percentage_to_use', default=0.1,
+        help="Percentage of dataset to use")
 parser.add_argument('--bucket-name', default='test-track',
         help="Name of GCS bucket")
 
 
-def generate_csv_with_gcs(data_dir, gcs_filename, bucket_name):
+def generate_csv_with_gcs(data_dir, gcs_filename, bucket_name, percentage_to_use):
     """ Generate a csv file with gcs url to images stored on the cloud and
         associated targets.
         Args:
@@ -46,11 +48,17 @@ def generate_csv_with_gcs(data_dir, gcs_filename, bucket_name):
     blob.download_to_filename("predictions.pickle")
     
     df = pd.read_pickle("predictions.pickle")
+
     df_images = pd.DataFrame(df['images'])
     df_targets = pd.DataFrame(df['control_commands'])
 
     df_sample = pd.concat([df_images,df_targets], axis=1)
     df_sample.columns = ['image', 'throttle', 'steer']
+
+    # Use only n samples specified by "percentage_to_use". Use smaller size when experimenting.
+    n_samples = len(df_sample)
+    n_use = int(n_samples * percentage_to_use)
+    df_sample = df_sample[:n_use]
 
     df_sample['key'] = df_sample['image'].apply(lambda x: x.decode("utf-8").split('/')[-1])
     df_sample = df_sample.set_index('key').drop(columns=['image'])
@@ -65,8 +73,6 @@ def generate_csv_with_gcs(data_dir, gcs_filename, bucket_name):
     # which examples are stored.
     df_final = df_gsurl.join(df_sample, how='inner')
     df_final = df_final.rename(columns={0:'cloud_url'})
-    #df_final['target'] = df_final[['throttle', 'steer']].values.tolist()
-    #df_final = df_final.drop(columns=['throttle','steer'])
     
     print("Saving data_with_gcs.csv")
     df_final.to_csv(os.path.join(data_dir,'data_with_gcs.csv'))
@@ -75,5 +81,5 @@ def generate_csv_with_gcs(data_dir, gcs_filename, bucket_name):
 if __name__=="__main__":
     args = parser.parse_args()
 
-    generate_csv_with_gcs(args.data_dir, args.gcs_filename, args.bucket_name)
+    generate_csv_with_gcs(args.data_dir, args.gcs_filename, args.bucket_name, args.percentage_to_use)
    
