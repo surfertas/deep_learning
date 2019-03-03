@@ -58,28 +58,23 @@ class Net(nn.Module):
         #print(s.shape)
         
         # flatten the output for each image
-        s = s.view(-1, 15*15*self.num_channels*4)             # batch_size x 14*14*num_channels*4
+        s = s.view(-1, 15*15*self.num_channels*4)           # batch_size x 14*14*num_channels*4
 
         # apply 2 fully connected layers with dropout
         s = F.dropout(F.relu(self.fcbn1(self.fc1(s))), 
             p=self.dropout_rate, training=self.training)    # batch_size x self.num_channels*4
         s = self.fc2(s)                                     # batch_size x 6
 
-        # apply log softmax on each image's output (this is recommended over applying softmax
-        # since it is numerically more stable)
         return s
 
 
 def rmse(outputs, targets):
     residuals = (outputs - targets)
-    print(residuals)
-    print( np.sqrt(np.mean(residuals**2)))
     return np.sqrt(np.mean(residuals**2))
     
 
 
 # maintain all metrics required in this dictionary- these are used in the training and evaluation loops
 metrics = {
-    # couold add more metrics such as accuracy for each token type
     'rmse': rmse
 }
