@@ -6,5 +6,7 @@
     "num_channels": 32,
     "save_summary_steps": 100,
     "num_workers": 4,
+    "model": "base_net",
     "splits": {"train": 0.7, "val": 0.2, "test":0.1}
+
 }
