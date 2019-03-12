@@ -36,7 +36,7 @@ class AlexNetTransferFE(nn.Module):
     layers) and retrain for regression.
     """
 
-    def __init__(self):
+    def __init__(self, params):
         super(AlexNetTransferFE, self).__init__()
         self.features = AlexNetConv4()
         self.fc1 = nn.Linear(43264, 1024)

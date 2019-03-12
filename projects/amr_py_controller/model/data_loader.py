@@ -90,8 +90,8 @@ def fetch_dataloader(types, bucket_name, data_dir, csv_filename, params):
         'alexnetfe': imagenet_transforms
     }
 
-    train_transformer =  transforms[params.model]["train_transformer"]
-    eval_transformer =  transforms[params.model]["eval_transformer"]
+    train_transformer =  transforms[params.model]()["train_transformer"]
+    eval_transformer =  transforms[params.model]()["eval_transformer"]
 
     for split in ['train', 'val', 'test']:
         if split in types:

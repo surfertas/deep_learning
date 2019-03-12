@@ -16,10 +16,10 @@ import model.data_loader as data_loader
 from evaluate import evaluate
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--gcs_bucket_name', default='test-track', help="GCS Bucket name where data is stored")
+parser.add_argument('--gcs_bucket_name', default='track-v0-night', help="GCS Bucket name where data is stored")
 parser.add_argument('--data_dir', default='data/gcs', help="Directory containing the csv file")
 parser.add_argument('--csv_filename', default='data_with_gcs.csv')
-parser.add_argument('--model_dir', default='experiments/base_model', help="Directory containing params.json")
+parser.add_argument('--model_dir', default='experiments/alexnetfe_model', help="Directory containing params.json")
 parser.add_argument('--restore_file', default=None,
                     help="Optional, name of the file in --model_dir containing weights to reload before \
                     training")  # 'best' or 'train'
@@ -182,7 +182,8 @@ if __name__ == '__main__':
         "alexnetfe": net.AlexNetTransferFE
     }
 
-    model = model_dict[params.model](params).cuda() if params.cuda else net.Net(params)
+    model = model_dict[params.model]
+    model = model(params).cuda() if params.cuda else model(params)
     #model = net.Net(params).cuda() if params.cuda else net.Net(params)
     optimizer = optim.Adam(model.parameters(), lr=params.learning_rate)
 
