@@ -29,7 +29,7 @@ class AlexNetConv4(nn.Module):
         return x
 
 
-class PilotNetAlexNetTransfer(nn.Module):
+class AlexNetTransferFE(nn.Module):
 
     """
     Fine tuning with AlexNet. Remove classification layers (basically all the fc
@@ -37,7 +37,7 @@ class PilotNetAlexNetTransfer(nn.Module):
     """
 
     def __init__(self):
-        super(PilotNetAlexNetTransfer, self).__init__()
+        super(AlexNetTransferFE, self).__init__()
         self.features = AlexNetConv4()
         self.fc1 = nn.Linear(43264, 1024)
         self.fc2 = nn.Linear(1024, 10)
