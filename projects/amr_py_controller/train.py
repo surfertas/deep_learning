@@ -178,7 +178,8 @@ if __name__ == '__main__':
 
     # Define the model and optimizer
     model_dict = {
-        "base_net": net.Net
+        "base_net": net.Net,
+        "alexnetfe": net.AlexNetTransferFE
     }
 
     model = model_dict[params.model](params).cuda() if params.cuda else net.Net(params)

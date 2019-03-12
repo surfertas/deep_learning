@@ -10,6 +10,8 @@ from io import BytesIO
 from PIL import Image
 from google.cloud import storage
 
+from transforms import basenet_transforms, imagenet_transforms 
+
 
 train_transformer = transforms.Compose([
     transforms.Resize((124,124)),
@@ -83,6 +85,14 @@ def fetch_dataloader(types, bucket_name, data_dir, csv_filename, params):
         'val': data_eval,
         'test': data_test}
 
+    transforms = {
+        'base_net': basenet_transforms,
+        'alexnetfe': imagenet_transforms
+    }
+
+    train_transformer =  transforms[params.model]["train_transformer"]
+    eval_transformer =  transforms[params.model]["eval_transformer"]
+
     for split in ['train', 'val', 'test']:
         if split in types:
             # use the train_transformer if training data, else use eval_transformer without random flip
@@ -96,7 +106,8 @@ def fetch_dataloader(types, bucket_name, data_dir, csv_filename, params):
 
             else:
                 dl = DataLoader(ControllerDataset(bucket_name, split, datasets, eval_transformer),
-                                batch_size=params.batch_size, shuffle=False,
+                                batch_size=params.batch_size,
+                                shuffle=False,
                                 num_workers=params.num_workers,
                                 pin_memory=params.cuda)
 
