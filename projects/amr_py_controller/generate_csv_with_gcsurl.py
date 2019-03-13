@@ -17,9 +17,9 @@ parser.add_argument('--data-dir', default='./data/gcs',
         help="Directory with gcs.csv")
 parser.add_argument('--gcs-filename', default='gcs.csv',
         help="Name of file with gcs urls")
-parser.add_argument('--percentage_to_use', default=0.1,
+parser.add_argument('--percentage_to_use', default=1.0,
         help="Percentage of dataset to use")
-parser.add_argument('--bucket-name', default='test-track',
+parser.add_argument('--bucket-name', default='track-v0-night',
         help="Name of GCS bucket")
 
 
