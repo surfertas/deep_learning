@@ -19,7 +19,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--gcs_bucket_name', default='track-v0-night', help="GCS Bucket name where data is stored")
 parser.add_argument('--data_dir', default='data/gcs', help="Directory containing the csv file")
 parser.add_argument('--csv_filename', default='data_with_gcs.csv')
-parser.add_argument('--model_dir', default='experiments/alexnetfe_model', help="Directory containing params.json")
+parser.add_argument('--model_dir', default='experiments/base_model', help="Directory containing params.json")
 parser.add_argument('--restore_file', default=None,
                     help="Optional, name of the file in --model_dir containing weights to reload before \
                     training")  # 'best' or 'train'
