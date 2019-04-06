@@ -1,0 +1,14 @@
+name: amr_py
+dependencies:
+  - python=2.7
+  - numpy
+  - Pillow
+    #  - torch>0.3
+  - tabulate
+  - tqdm
+  - pandas
+  - yacs
+  - pip:
+    - google-cloud
+    - google-cloud-storage
+    - google-compute-engine  
