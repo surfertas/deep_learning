@@ -63,7 +63,7 @@ def generate_csv_with_gcs(data_dir, gcs_filename, bucket_name, percentage_to_use
     df_sample['key'] = df_sample['image'].apply(lambda x: x.decode("utf-8").split('/')[-1])
     df_sample = df_sample.set_index('key').drop(columns=['image'])
     
-    df_gsurl = pd.read_csv('gcs.csv', header=None)
+    df_gsurl = pd.read_csv(gcs_filename, header=None)
     
     df_gsurl['key'] = df_gsurl[0].apply(lambda x: x.split('/')[-1])
     df_gsurl = df_gsurl.set_index('key')

@@ -20,8 +20,7 @@ _C.MODEL.WEIGHTS = "./weights_final.pth"  # should be a path to pth or ckpt file
 # ---------------------------------------------------------------------------- #
 _C.MODEL.CNN = CN()
 _C.MODEL.CNN.INPUT_CHANNELS = 3
-_C.MODEL.CNN.LAYERS = [     # Adhere to [out_channels, (kernel_h, kernel_w),
-stride]
+_C.MODEL.CNN.LAYERS = [     # Adhere to [out_channels, (kernel_h, kernel_w),stride]
     {'out_channels': 24, 'kernel': (5, 5), 'stride': 2, },
     {'out_channels': 36, 'kernel': (5, 5), 'stride': 2, },
     {'out_channels': 48, 'kernel': (5, 5), 'stride': 2, },
@@ -34,8 +33,7 @@ _C.MODEL.CNN.DROPOUT = 0.2
 # ---------------------------------------------------------------------------- #
 _C.MODEL.FC = CN()
 _C.MODEL.FC.INPUT = 2304
-_C.MODEL.FC.LAYERS = [             # Adhere to [out_channels, (kernel_h,
-kernel_w), stride]
+_C.MODEL.FC.LAYERS = [             # Adhere to [out_channels, (kernel_h, kernel_w), stride]
     {'to_size': 100, 'dropout': .5, 'norm': False},
     {'to_size': 50, 'dropout': .5, 'norm': False},
     {'to_size': 10, 'dropout': .0, 'norm': False},
@@ -46,8 +44,7 @@ kernel_w), stride]
 # ---------------------------------------------------------------------------- #
 _C.MODEL.BACKWARD_CNN = CN()
 _C.MODEL.BACKWARD_CNN.INPUT_CHANNELS = 1
-_C.MODEL.BACKWARD_CNN.LAYERS = [     # Adhere to [out_channels, (kernel_h,
-kernel_w), stride]
+_C.MODEL.BACKWARD_CNN.LAYERS = [     # Adhere to [out_channels, (kernel_h, kernel_w), stride]
     {'out_channels': 1, 'kernel': (3, 3), 'stride': 1, },
     {'out_channels': 1, 'kernel': (3, 3), 'stride': 1, },
     {'out_channels': 1, 'kernel': (5, 5), 'stride': 2, },
@@ -137,8 +134,7 @@ _C.LOG.PERIOD = 100
 _C.LOG.WEIGHTS_SAVE_PERIOD = 10000
 _C.LOG.PLOT = CN()
 _C.LOG.PLOT.DISPLAY_PORT = 8097
-_C.LOG.PLOT.ITER_PERIOD = 1000  # effective plotting step is _C.LOG.PERIOD *
-LOG.PLOT.ITER_PERIOD
+_C.LOG.PLOT.ITER_PERIOD = 1000  # effective plotting step is _C.LOG.PERIOD * LOG.PLOT.ITER_PERIOD
 
 
 # ---------------------------------------------------------------------------- #

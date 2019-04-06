@@ -176,7 +176,7 @@ if __name__ == '__main__':
     cfg.freeze()
 
     # Set the logger
-    utils.set_logger(os.path.join(args.model_dir, 'train.log'))
+    utils.set_logger(os.path.join(cfg.LOG.PATH, 'train.log'))
 
     # Create the input data pipeline
     logging.info("Loading the datasets...")
