@@ -8,17 +8,18 @@ import numpy as np
 import torch
 from torch.autograd import Variable
 import utils
-import model.net as net
-import model.data_loader as data_loader
+import model.all_metrics as all_metrics
+import data.data_loader as data_loader
+from config import get_cfg_defaults
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--data_dir', default='data/64x64_SIGNS', help="Directory containing the dataset")
+parser.add_argument('--data_dir', default='data/gcs', help="Directory containing the dataset")
 parser.add_argument('--model_dir', default='experiments/base_model', help="Directory containing params.json")
 parser.add_argument('--restore_file', default='best', help="name of the file in --model_dir \
                      containing weights to load")
 
 
-def evaluate(model, loss_fn, dataloader, metrics, params):
+def evaluate(model, loss_fn, dataloader, metrics, cfg):
     """Evaluate the model on `num_steps` batches.
 
     Args:
@@ -40,7 +41,7 @@ def evaluate(model, loss_fn, dataloader, metrics, params):
     for data_batch, targets_batch in dataloader:
 
         # move to GPU if available
-        if params.cuda:
+        if torch.cuda.is_available():
             data_batch, targets_batch = data_batch.cuda(async=True), targets_batch.cuda(async=True)
         # fetch the next evaluation batch
         data_batch, targets_batch = Variable(data_batch), Variable(targets_batch)
@@ -61,7 +62,6 @@ def evaluate(model, loss_fn, dataloader, metrics, params):
 
     # compute mean of all metrics in summary
     
-    print(summ)
     metrics_mean = {metric:np.mean([x[metric] for x in summ]) for metric in summ[0]} 
     metrics_string = " ; ".join("{}: {:05.3f}".format(k, v) for k, v in metrics_mean.items())
     logging.info("- Eval metrics : " + metrics_string)
@@ -74,16 +74,11 @@ if __name__ == '__main__':
     """
     # Load the parameters
     args = parser.parse_args()
-    json_path = os.path.join(args.model_dir, 'params.json')
-    assert os.path.isfile(json_path), "No json configuration file found at {}".format(json_path)
-    params = utils.Params(json_path)
-
-    # use GPU if available
-    params.cuda = torch.cuda.is_available()     # use GPU is available
 
     # Set the random seed for reproducible experiments
     torch.manual_seed(230)
-    if params.cuda: torch.cuda.manual_seed(230)
+    # use GPU if available
+    if torch.cuda.is_available(): torch.cuda.manual_seed(230)
         
     # Get the logger
     utils.set_logger(os.path.join(args.model_dir, 'evaluate.log'))
@@ -92,16 +87,18 @@ if __name__ == '__main__':
     logging.info("Creating the dataset...")
 
     # fetch dataloaders
-    dataloaders = data_loader.fetch_dataloader(['test'], args.data_dir, params)
+    dataloaders = data_loader.fetch_dataloader(['test'], args.data_dir, cfg)
     test_dl = dataloaders['test']
 
     logging.info("- done.")
 
     # Define the model
-    model = net.Net(params).cuda() if params.cuda else net.Net(params)
+    model = build_model(cfg)
+    device = torch.device(cfg.MODEL.DEVICE)
+    model.to(device)
     
-    loss_fn = net.loss_fn
-    metrics = net.metrics
+    loss_fn = torch.nn.MSELoss()
+    metrics = all_metrics.metrics
     
     logging.info("Starting evaluation")
 
@@ -109,6 +106,6 @@ if __name__ == '__main__':
     utils.load_checkpoint(os.path.join(args.model_dir, args.restore_file + '.pth.tar'), model)
 
     # Evaluate
-    test_metrics = evaluate(model, loss_fn, test_dl, metrics, params)
+    test_metrics = evaluate(model, loss_fn, test_dl, metrics, cfg)
     save_path = os.path.join(args.model_dir, "metrics_test_{}.json".format(args.restore_file))
     utils.save_dict_to_json(test_metrics, save_path)

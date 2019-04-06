@@ -67,14 +67,10 @@ _C.INPUT.BATCH_SIZE = 256
 _C.DATASETS = CN()
 _C.DATASETS.FACTORY = 'DrivingDatasetDataset'               # datasets class
 _C.DATASETS.DATA_DIR = './driving_dataset'                  # path to dataset
-_C.DATASETS.ANN_TRAIN_PATH = './driving_dataset/train.csv'  # path to annotation
-csv
-_C.DATASETS.ANN_VAL_PATH = './driving_dataset/val.csv'      # path to annotation
-csv
-_C.DATASETS.ANN_VIS_PATH = './driving_dataset/vis.csv'      # path to annotation
-csv
-_C.DATASETS.SHUFFLE = True                                  # load in shuffle
-fashion
+_C.DATASETS.ANN_TRAIN_PATH = './driving_dataset/train.csv'  # path to annotation csv
+_C.DATASETS.ANN_VAL_PATH = './driving_dataset/val.csv'      # path to annotation csv
+_C.DATASETS.ANN_VIS_PATH = './driving_dataset/vis.csv'      # path to annotation csv
+_C.DATASETS.SHUFFLE = True                                  # load in shuffle fashion
 
 # ---------------------------------------------------------------------------- #
 # Image and Steer parameters
