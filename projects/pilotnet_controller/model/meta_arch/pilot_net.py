@@ -38,7 +38,7 @@ class PilotNet(nn.Module):
     def forward(self, input, targets=None):
         batch_size = input.size(0)
         normalized_input = input / 127.5 - 1
-        normalized_input = normalized_input.permute(0, 3, 1, 2)   # dislocate depth axis
+        #normalized_input = normalized_input.permute(0, 3, 1, 2)   # dislocate depth axis
         cnn_features = self.cnn_backbone(normalized_input)
         flattened_features = cnn_features.view([batch_size, -1])
         predictions = self.feed_forward(flattened_features)
