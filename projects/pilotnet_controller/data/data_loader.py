@@ -41,7 +41,7 @@ class ControllerDataset(Dataset):
         blob = bucket.blob("/".join(gs_path[-2:]))
         image_string = blob.download_as_string()
         image = Image.open(BytesIO(image_string))
-        image = self._preprocess(image)
+        #image = self._preprocess(image)
         return image
 
     def _preprocess(self, image):
