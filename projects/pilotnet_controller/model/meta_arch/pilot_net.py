@@ -60,4 +60,4 @@ class PilotNet(nn.Module):
                     activations.append(layers_activation_temp)
             return predictions, activations
 
-return predictions
+        return predictions
