@@ -10,7 +10,7 @@ from io import BytesIO
 from PIL import Image
 from google.cloud import storage
 
-from transforms import basenet_transforms, imagenet_transforms 
+from transforms import basenet_transforms 
 
 
 
