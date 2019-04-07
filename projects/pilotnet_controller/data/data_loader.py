@@ -22,16 +22,24 @@ class ControllerDataset(Dataset):
         self.data_csv = datasets[split]
         self.features = self.data_csv['cloud_url']
         self.target = self.data_csv[['throttle', 'steer']]
+        self.augment = self.cfg.IMAGE.DO_AUGMENTATION
         self.transform = transform
 
     def __len__(self):
         return len(self.features)
         
     def __getitem__(self, idx):
+        # Target is a array consisting of [throttle, steer]
+        target = torch.FloatTensor(self.target.iloc[idx].values.tolist())
+        
+        if self.augment:
+            # Add some noise to the steering.
+            target[1] += np.random.normal(loc=0, scale=self.cfg.STEER.AUGMENTATION_SIGMA)
+
+        
         image = self._get_image(self.features.iloc[idx])
         image = self.transform(image)
-        print(image.shape)
-        target = torch.FloatTensor(self.target.iloc[idx].values.tolist())
+        
         return image, target
 
     def _get_image(self, gs_path):
