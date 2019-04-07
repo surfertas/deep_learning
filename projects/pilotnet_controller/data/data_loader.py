@@ -13,14 +13,6 @@ from google.cloud import storage
 from transforms import basenet_transforms, imagenet_transforms 
 
 
-train_transformer = transforms.Compose([
-    transforms.Resize((124,124)),
-    transforms.ToTensor()])  # transform it into a torch tensor
-
-# loader for evaluation, keep separate as transformer for train can be different
-eval_transformer = transforms.Compose([
-    transforms.Resize((124,124)),  
-    transforms.ToTensor()])  # transform it into a torch tensor
 
 class ControllerDataset(Dataset):
     
@@ -85,8 +77,9 @@ def fetch_dataloader(types, bucket_name, data_dir, csv_filename, cfg):
         'val': data_eval,
         'test': data_test}
 
-    train_transformer =  basenet_transforms["train_transformer"]
-    eval_transformer =  basenet_transforms["eval_transformer"]
+    transforms = basenet_transforms(cfg)
+    train_transformer =  transforms["train_transformer"]
+    eval_transformer =  transforms["eval_transformer"]
 
     for split in ['train', 'val', 'test']:
         if split in types:
