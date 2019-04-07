@@ -43,10 +43,10 @@ class PilotNet(nn.Module):
         flattened_features = cnn_features.view([batch_size, -1])
         predictions = self.feed_forward(flattened_features)
 
-        if self.training:
-            assert targets is not None
-            loss = self.loss_criterion(targets, predictions)
-            return predictions, loss
+        #if self.training:
+        #    assert targets is not None
+        #    loss = self.loss_criterion(targets, predictions)
+        #    return predictions, loss
 
         if self.visualizing:
             activations = []
