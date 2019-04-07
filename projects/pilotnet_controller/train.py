@@ -69,7 +69,7 @@ def train(model, optimizer, loss_fn, dataloader, metrics, cfg):
             optimizer.step()
 
             # Evaluate summaries only once in a while
-            if i % arg.LOG.PERIOD == 0:
+            if i % cfg.LOG.PERIOD == 0:
                 # extract data from torch Variable, move to cpu, convert to numpy arrays
                 output_batch = output_batch.data.cpu().numpy()
                 targets_batch = targets_batch.data.cpu().numpy()
