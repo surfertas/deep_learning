@@ -16,7 +16,8 @@ from transforms import basenet_transforms
 
 class ControllerDataset(Dataset):
     
-    def __init__(self, bucket_name, split, datasets, transform):
+    def __init__(self, cfg, bucket_name, split, datasets, transform):
+        self.cfg = cfg
         self.bucket_name = bucket_name
         self.data_csv = datasets[split]
         self.features = self.data_csv['cloud_url']
@@ -39,9 +40,14 @@ class ControllerDataset(Dataset):
         blob = bucket.blob("/".join(gs_path[-2:]))
         image_string = blob.download_as_string()
         image = Image.open(BytesIO(image_string))
+        image = self._preprocess(image)
         return image
 
-
+    def _preprocess(self, image):
+        # crop image (remove useless information)
+        cropped = image[range(*self.cfg.IMAGE.CROP_HEIGHT), :, :]
+        return cropped
+        
 
 def fetch_dataloader(types, bucket_name, data_dir, csv_filename, cfg):
     """
