@@ -30,6 +30,7 @@ class ControllerDataset(Dataset):
     def __getitem__(self, idx):
         image = self._get_image(self.features.iloc[idx])
         image = self.transform(image)
+        print(image.shape)
         target = torch.FloatTensor(self.target.iloc[idx].values.tolist())
         return image, target
 
