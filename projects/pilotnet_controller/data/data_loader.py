@@ -93,14 +93,14 @@ def fetch_dataloader(types, bucket_name, data_dir, csv_filename, cfg):
             # use the train_transformer if training data, else use eval_transformer without random flip
             if split == 'train':
                 # NOTE: set shuffle to false as not sure what implications are for time series.
-                dl = DataLoader(ControllerDataset(bucket_name, split, datasets, train_transformer),
+                dl = DataLoader(ControllerDataset(cfg, bucket_name, split, datasets, train_transformer),
                                 batch_size=cfg.INPUT.BATCH_SIZE,
                                 shuffle=cfg.DATASETS.SHUFFLE,
                                 num_workers=cfg.DATALOADER.NUM_WORKERS,
                                 pin_memory=cfg.DATALOADER.PIN_MEMORY)
 
             else:
-                dl = DataLoader(ControllerDataset(bucket_name, split, datasets, eval_transformer),
+                dl = DataLoader(ControllerDataset(cfg, bucket_name, split, datasets, eval_transformer),
                                 batch_size=cfg.INPUT.BATCH_SIZE,
                                 shuffle=cfg.DATASETS.SHUFFLE,
                                 num_workers=cfg.DATALOADER.NUM_WORKERS,
