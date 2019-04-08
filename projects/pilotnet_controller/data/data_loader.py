@@ -44,12 +44,14 @@ class ControllerDataset(Dataset):
         return image, target
 
     def _get_image(self, gs_path):
-        gs_path = gs_path.split("/")
-        storage_client = storage.Client()
-        bucket = storage_client.get_bucket(self.bucket_name)
-        blob = bucket.blob("/".join(gs_path[-2:]))
-        image_string = blob.download_as_string()
-        image = Image.open(BytesIO(image_string))
+        #gs_path = gs_path.split("/")
+        #storage_client = storage.Client()
+        #bucket = storage_client.get_bucket(self.bucket_name)
+        #blob = bucket.blob("/".join(gs_path[-2:]))
+        #image_string = blob.download_as_string()
+        #image = Image.open(BytesIO(image_string))
+        image = Image.open(BytesIO(gs_path))
+
         #image = self._preprocess(image)
         return image
 
