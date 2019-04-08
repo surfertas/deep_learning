@@ -21,7 +21,7 @@ class ControllerDataset(Dataset):
         self.cfg = cfg
         self.bucket_name = bucket_name
         self.data_csv = datasets[split]
-        self.features = self.data_csv['cloud_url']
+        self.features = self.data_csv['url']
         self.target = self.data_csv[['throttle', 'steer']]
         self.augment = self.cfg.IMAGE.DO_AUGMENTATION
         self.transform = transform

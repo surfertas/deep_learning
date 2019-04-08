@@ -15,6 +15,8 @@ from google.cloud import storage
 parser = argparse.ArgumentParser()
 parser.add_argument('--data-dir', default='./data/gcs',
         help="Directory with gcs.csv")
+parser.add_argument('--mount-dir', default=None,
+        help="Directory where Google storage was fused.")
 parser.add_argument('--gcs-filename', default='gcs.csv',
         help="Name of file with gcs urls")
 parser.add_argument('--percentage_to_use', default=1.0,
@@ -23,7 +25,7 @@ parser.add_argument('--bucket-name', default='track-v0-night',
         help="Name of GCS bucket")
 
 
-def generate_csv_with_gcs(data_dir, gcs_filename, bucket_name, percentage_to_use):
+def generate_csv_with_gcs(data_dir, mount_dir, gcs_filename, bucket_name, percentage_to_use):
     """ Generate a csv file with gcs url to images stored on the cloud and
         associated targets.
         Args:
@@ -65,6 +67,10 @@ def generate_csv_with_gcs(data_dir, gcs_filename, bucket_name, percentage_to_use
     
     df_gsurl = pd.read_csv(gcs_filename, header=None)
     
+    # Set the directory to the directory to the google storage was fused.
+    if mount_dir is not None:
+        df_gsurl = df_gsurl[0].apply(lambda x: os.path.join(args.mount_dir, x.split('/')[-1])).to_frame()
+    
     df_gsurl['key'] = df_gsurl[0].apply(lambda x: x.split('/')[-1])
     df_gsurl = df_gsurl.set_index('key')
 
@@ -72,7 +78,7 @@ def generate_csv_with_gcs(data_dir, gcs_filename, bucket_name, percentage_to_use
     # necessarily match the examples pickled as a result of the frequency at
     # which examples are stored.
     df_final = df_gsurl.join(df_sample, how='inner')
-    df_final = df_final.rename(columns={0:'cloud_url'})
+    df_final = df_final.rename(columns={0:'url'})
     
     print("Saving data_with_gcs.csv")
     df_final.to_csv(os.path.join(data_dir,'data_with_gcs.csv'))
@@ -81,5 +87,5 @@ def generate_csv_with_gcs(data_dir, gcs_filename, bucket_name, percentage_to_use
 if __name__=="__main__":
     args = parser.parse_args()
 
-    generate_csv_with_gcs(args.data_dir, args.gcs_filename, args.bucket_name, args.percentage_to_use)
+    generate_csv_with_gcs(args.data_dir, args.mount_dir, args.gcs_filename, args.bucket_name, args.percentage_to_use)
    
