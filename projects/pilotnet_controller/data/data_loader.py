@@ -37,7 +37,7 @@ class ControllerDataset(Dataset):
 
         
         if self.augment:
-              if random.choice([True, False]):
+            if random.choice([True, False]):
                 image = image[:, ::-1, :]
                 target[1] *= -1.
 
