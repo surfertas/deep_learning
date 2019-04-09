@@ -101,7 +101,7 @@ _C.DATALOADER.TEST = 0.1   # % test
 # Solver Configs
 # ---------------------------------------------------------------------------- #
 _C.SOLVER = CN()
-_C.SOLVER.EPOCHS = 10
+_C.SOLVER.EPOCHS = 4
 
 _C.SOLVER.BASE_LR = 0.0001
 _C.SOLVER.BIAS_LR_FACTOR = 2
