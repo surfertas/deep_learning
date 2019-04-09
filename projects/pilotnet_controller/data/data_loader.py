@@ -59,7 +59,7 @@ class ControllerDataset(Dataset):
         
         # use if gcsfuse is used
         # image = Image.open(gs_path)
-        image = self._preprocess(image)
+        #image = self._preprocess(image)
         return image
 
     def _preprocess(self, image):
