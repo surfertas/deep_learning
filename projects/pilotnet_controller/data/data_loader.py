@@ -31,16 +31,22 @@ class ControllerDataset(Dataset):
         
     def __getitem__(self, idx):
         # Target is a array consisting of [throttle, steer]
-        target = torch.FloatTensor(self.target.iloc[idx].values.tolist())
-        
-        if self.augment:
-            # Add some noise to the steering.
-            target[1] += np.random.normal(loc=0, scale=self.cfg.STEER.AUGMENTATION_SIGMA)
+        #target = torch.FloatTensor(self.target.iloc[idx].values.tolist())
+        target = self.target.iloc[idx].values.tolist()
+        image = self._get_image(self.features.iloc[idx])
 
         
-        image = self._get_image(self.features.iloc[idx])
-        image = self.transform(image)
+        if self.augment:
+              if random.choice([True, False]):
+                image = image[:, ::-1, :]
+                target[1] *= -1.
+
+            # Add some noise to the steering.
+            target[1] += np.random.normal(loc=0, scale=self.cfg.STEER.AUGMENTATION_SIGMA)
         
+       
+        image = self.transform(Image.fromarray(image))
+        target = torch.FloatTensor(target)
         return image, target
 
     def _get_image(self, gs_path):
@@ -49,10 +55,11 @@ class ControllerDataset(Dataset):
         bucket = storage_client.get_bucket(self.bucket_name)
         blob = bucket.blob("/".join(gs_path[-2:]))
         image_string = blob.download_as_string()
-        image = Image.open(BytesIO(image_string))
+        image = np.array(Image.open(BytesIO(image_string)))
+        
         # use if gcsfuse is used
         # image = Image.open(gs_path)
-        #image = self._preprocess(image)
+        image = self._preprocess(image)
         return image
 
     def _preprocess(self, image):
