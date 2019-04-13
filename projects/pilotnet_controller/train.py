@@ -134,7 +134,7 @@ def train_and_evaluate(
         val_metrics = evaluate(model, loss_fn, val_dataloader, metrics, cfg)
 
         val_rmse = val_metrics['rmse']
-        is_best = val_rmse>=best_val_rmse
+        is_best = val_rmse <= best_val_rmse
 
         # Save weights
         utils.save_checkpoint({'epoch': epoch + 1,
