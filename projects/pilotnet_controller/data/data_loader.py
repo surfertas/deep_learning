@@ -49,7 +49,7 @@ class ControllerDataset(Dataset):
         image = self.transform(Image.fromarray(image))
     
         # Train on both throttle, steer or just steer
-        target = target if self.throttle else target[1]
+        target = target if self.throttle else np.array([target[1]])
 
         target = torch.FloatTensor(target)
 
