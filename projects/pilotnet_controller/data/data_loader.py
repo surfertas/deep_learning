@@ -17,7 +17,7 @@ from transforms import basenet_transforms
 
 class ControllerDataset(Dataset):
     
-    def __init__(self, cfg, bucket_name, split, datasets, transform):
+    def __init__(self, cfg, bucket_name, split, datasets, transform, throttle=False):
         self.cfg = cfg
         self.bucket_name = bucket_name
         self.data_csv = datasets[split]
@@ -25,6 +25,7 @@ class ControllerDataset(Dataset):
         self.target = self.data_csv[['throttle', 'steer']]
         self.augment = self.cfg.IMAGE.DO_AUGMENTATION
         self.transform = transform
+        self.throttle = throttle
 
     def __len__(self):
         return len(self.features)
@@ -46,7 +47,12 @@ class ControllerDataset(Dataset):
         
        
         image = self.transform(Image.fromarray(image))
+    
+        # Train on both throttle, steer or just steer
+        target = target if self.throttle else target[1]
+
         target = torch.FloatTensor(target)
+
         return image, target
 
     def _get_image(self, gs_path):
