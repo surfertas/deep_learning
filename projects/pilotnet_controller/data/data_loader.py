@@ -5,7 +5,7 @@ import os
 
 import torch
 import torchvision.transforms as transforms
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset, DataLoader, ConcatDataset
 
 from io import BytesIO
 from PIL import Image
@@ -17,15 +17,18 @@ from transforms import basenet_transforms
 
 class ControllerDataset(Dataset):
     
-    def __init__(self, cfg, bucket_name, split, datasets, transform, throttle=False):
+    def __init__(self, cfg, bucket_name, split, datasets, transform, remove_center=False, throttle_include=False):
         self.cfg = cfg
         self.bucket_name = bucket_name
         self.data_csv = datasets[split]
         self.features = self.data_csv['url']
         self.target = self.data_csv[['throttle', 'steer']]
+
+        self.n_samples = len(self.target)
         self.augment = self.cfg.IMAGE.DO_AUGMENTATION
         self.transform = transform
-        self.throttle = throttle
+        self.remove_center=remove_center
+        self.throttle_include = throttle_include
 
     def __len__(self):
         return len(self.features)
@@ -33,7 +36,17 @@ class ControllerDataset(Dataset):
     def __getitem__(self, idx):
         # Target is a array consisting of [throttle, steer]
         #target = torch.FloatTensor(self.target.iloc[idx].values.tolist())
-        target = self.target.iloc[idx].values.tolist()
+        if self.remove_center:
+            while True:
+                target = self.target.iloc[idx].values.tolist()
+                if abs(target[1]) > 0.6:
+                    break
+                else:
+                    idx = int((idx + np.random.randint(self.n_samples, size=1))%self.n_samples)
+        else:
+            target = self.target.iloc[idx].values.tolist()
+
+
         image = self._get_image(self.features.iloc[idx])
 
         
@@ -49,7 +62,7 @@ class ControllerDataset(Dataset):
         image = self.transform(Image.fromarray(image))
     
         # Train on both throttle, steer or just steer
-        target = target if self.throttle else np.array([target[1]])
+        target = target if self.throttle_include else np.array([target[1]])
 
         target = torch.FloatTensor(target)
 
@@ -117,12 +130,18 @@ def fetch_dataloader(types, bucket_name, data_dir, csv_filename, cfg):
             # use the train_transformer if training data, else use eval_transformer without random flip
             if split == 'train':
                 # NOTE: set shuffle to false as not sure what implications are for time series.
-                dl = DataLoader(ControllerDataset(cfg, bucket_name, split, datasets, train_transformer),
+                data_all = ControllerDataset(cfg, bucket_name, split, datasets, train_transformer)
+
+                # Dataset with samples with abs(steer) > 0.6, turns to help balance data.
+                data_no_center = ControllerDataset(cfg, bucket_name, split, datasets, train_transformer, remove_center=True)
+
+                data_concat = ConcatDataset([data_all,data_no_center])
+
+                dl = DataLoader(data_concat,
                                 batch_size=cfg.INPUT.BATCH_SIZE,
                                 shuffle=cfg.DATASETS.SHUFFLE,
                                 num_workers=cfg.DATALOADER.NUM_WORKERS,
                                 pin_memory=cfg.DATALOADER.PIN_MEMORY)
-
             else:
                 dl = DataLoader(ControllerDataset(cfg, bucket_name, split, datasets, eval_transformer),
                                 batch_size=cfg.INPUT.BATCH_SIZE,
