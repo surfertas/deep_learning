@@ -20,7 +20,7 @@ from config import get_cfg_defaults
 parser = argparse.ArgumentParser()
 parser.add_argument('--gcs_bucket_name', default='track-v0-night', help="GCS Bucket name where data is stored")
 parser.add_argument('--data_dir', default='data/gcs', help="Directory containing the csv file")
-parser.add_argument('--csv_filename', default='data_with_gcs.csv')
+parser.add_argument('--csv_filename', default='path_to_data.csv')
 parser.add_argument('--model_dir', default='experiments/base_model', help="Directory containing params.json")
 parser.add_argument('--restore_file', default=None,
                     help="Optional, name of the file in --model_dir containing weights to reload before \
@@ -59,6 +59,9 @@ def train(model, optimizer, loss_fn, dataloader, metrics, cfg):
 
             # compute model output and loss
             output_batch = model(train_batch)
+            print("output: {}".format(output_batch))
+            print("target: {}".format(targets_batch))
+            
             loss = loss_fn(output_batch, targets_batch)
 
             # clear previous gradients, compute gradients of all variables wrt loss
@@ -197,7 +200,6 @@ if __name__ == '__main__':
     optimizer = optim.Adam(model.parameters(), lr=cfg.SOLVER.BASE_LR)
 
     # fetch loss function and metrics
-    #loss_fn = net.loss_fn
     loss_fn = torch.nn.MSELoss()
 
     metrics = all_metrics.metrics
