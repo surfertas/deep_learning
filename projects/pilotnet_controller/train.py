@@ -59,8 +59,8 @@ def train(model, optimizer, loss_fn, dataloader, metrics, cfg):
 
             # compute model output and loss
             output_batch = model(train_batch)
-            print("output: {}".format(output_batch))
-            print("target: {}".format(targets_batch))
+#            print("output: {}".format(output_batch))
+#            print("target: {}".format(targets_batch))
             
             loss = loss_fn(output_batch, targets_batch)
 

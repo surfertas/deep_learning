@@ -39,25 +39,26 @@ class ControllerDataset(Dataset):
         if self.remove_center:
             while True:
                 target = self.target.iloc[idx].values.tolist()
-                if abs(target[1]) > 0.6:
+                if abs(target[1]) > 0.3:
                     break
                 else:
                     idx = int((idx + np.random.randint(self.n_samples, size=1))%self.n_samples)
         else:
             target = self.target.iloc[idx].values.tolist()
 
-
         image = self._get_image(self.features.iloc[idx])
-
         
         if self.augment:
             if random.choice([True, False]):
                 image = image[:, ::-1, :]
                 target[1] *= -1.
 
-            # Add some noise to the steering.
-            target[1] += np.random.normal(loc=0, scale=self.cfg.STEER.AUGMENTATION_SIGMA)
-        
+                # Add some noise to the steering.
+                target[1] += np.random.normal(loc=0, scale=self.cfg.STEER.AUGMENTATION_SIGMA)
+            
+                # Clip between -1, 1
+                target[1] = np.clip(target[1],-1.0,1.0)
+       
        
         image = self.transform(Image.fromarray(image))
     
@@ -65,19 +66,11 @@ class ControllerDataset(Dataset):
         target = target if self.throttle_include else np.array([target[1]])
 
         target = torch.FloatTensor(target)
-
+    
         return image, target
 
     def _get_image(self, gs_path):
-        gs_path = gs_path.split("/")
-        storage_client = storage.Client()
-        bucket = storage_client.get_bucket(self.bucket_name)
-        blob = bucket.blob("/".join(gs_path[-2:]))
-        image_string = blob.download_as_string()
-        image = np.array(Image.open(BytesIO(image_string)))
-        
-        # use if gcsfuse is used
-        # image = Image.open(gs_path)
+        image = np.array(Image.open(gs_path))
         #image = self._preprocess(image)
         return image
 
