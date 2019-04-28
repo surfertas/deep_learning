@@ -170,7 +170,11 @@ if __name__ == '__main__':
 
 
     # Set the random seed for reproducible experiments
-    torch.manual_seed(230)
+    # See Pytorch Documentation for setting random seeds.
+    torch.manual_seed(0)
+    torch.backends.cudnn.deterministic=True
+    torch.backends.cudnn.benchmark=False
+    np.random.seed(0)
 
     # use GPU if available
     if torch.cuda.is_available(): torch.cuda.manual_seed(230)
@@ -181,7 +185,7 @@ if __name__ == '__main__':
     # Set the logger
     utils.set_logger(os.path.join(cfg.LOG.PATH, 'train.log'))
 
-    # Create the input data pipeline
+    # Create the input data pipeline\
     logging.info("Loading the datasets...")
 
     # fetch dataloaders
