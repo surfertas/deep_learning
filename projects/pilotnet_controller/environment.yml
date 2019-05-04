@@ -1,6 +1,6 @@
-name: amr_py
+name: amr-core
 dependencies:
-  - python=2.7
+  - python=3.6
   - numpy
   - Pillow
     #  - torch>0.3
