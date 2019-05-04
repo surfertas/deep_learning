@@ -3,7 +3,6 @@ import pandas as pd
 import numpy as np
 
 
-
 parser = argparse.ArgumentParser()
 parser.add_argument('--csv_path', help="Path to csv file")
 
@@ -17,7 +16,7 @@ def balance_data(csv_path: str, thresh: float, frac: float):
     return df_return
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     args = parser.parse_args()
     df = balance_data(
         csv_path=args.csv_path,
