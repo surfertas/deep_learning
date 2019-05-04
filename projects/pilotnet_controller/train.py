@@ -7,6 +7,7 @@ import os
 import numpy as np
 import torch
 import torch.optim as optim
+from torchvision.utils import save_image
 from torch.autograd import Variable
 from tqdm import tqdm
 
@@ -18,9 +19,8 @@ from evaluate import evaluate
 from config import get_cfg_defaults
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--gcs_bucket_name', default='track-v0-night', help="GCS Bucket name where data is stored")
 parser.add_argument('--data_dir', default='data/gcs', help="Directory containing the csv file")
-parser.add_argument('--csv_filename', default='path_to_data.csv')
+parser.add_argument('--csv_filename', default='path_to_data_balanced.csv')
 parser.add_argument('--model_dir', default='experiments/base_model', help="Directory containing params.json")
 parser.add_argument('--restore_file', default=None,
                     help="Optional, name of the file in --model_dir containing weights to reload before \
@@ -47,6 +47,9 @@ def train(model, optimizer, loss_fn, dataloader, metrics, cfg):
     summ = []
     loss_avg = utils.RunningAverage()
 
+    # set path to cwd
+    cwd = os.path.dirname(os.path.abspath(__file__))
+
     # Use tqdm for progress bar
     with tqdm(total=len(dataloader)) as t:
         for i, (train_batch, targets_batch) in enumerate(dataloader):
@@ -57,11 +60,19 @@ def train(model, optimizer, loss_fn, dataloader, metrics, cfg):
             # convert to torch Variables
             train_batch, targets_batch = Variable(train_batch), Variable(targets_batch)
 
+            if cfg.MODEL.DEBUG:
+                # print(train_batch[0].size())
+                for j, image in enumerate(train_batch):
+                    if j % 10 == 0:
+                        print(image.size())
+                        print(type(image))
+                        save_image(image, os.path.join(cwd, "prefwdpass/image-{}.png".format(i)))
+
             # compute model output and loss
             output_batch = model(train_batch)
 #            print("output: {}".format(output_batch))
 #            print("target: {}".format(targets_batch))
-            
+
             loss = loss_fn(output_batch, targets_batch)
 
             # clear previous gradients, compute gradients of all variables wrt loss
@@ -78,7 +89,7 @@ def train(model, optimizer, loss_fn, dataloader, metrics, cfg):
                 targets_batch = targets_batch.data.cpu().numpy()
 
                 # compute all metrics on this batch
-                summary_batch = {metric:metrics[metric](output_batch, targets_batch)
+                summary_batch = {metric: metrics[metric](output_batch, targets_batch)
                                  for metric in metrics}
                 summary_batch['loss'] = loss.data.item()
                 summ.append(summary_batch)
@@ -90,7 +101,7 @@ def train(model, optimizer, loss_fn, dataloader, metrics, cfg):
             t.update()
 
     # compute mean of all metrics in summary
-    metrics_mean = {metric:np.mean([x[metric] for x in summ]) for metric in summ[0]}
+    metrics_mean = {metric: np.mean([x[metric] for x in summ]) for metric in summ[0]}
     metrics_string = " ; ".join("{}: {:05.3f}".format(k, v) for k, v in metrics_mean.items())
     logging.info("- Train metrics: " + metrics_string)
 
@@ -142,9 +153,9 @@ def train_and_evaluate(
         # Save weights
         utils.save_checkpoint({'epoch': epoch + 1,
                                'state_dict': model.state_dict(),
-                               'optim_dict' : optimizer.state_dict()},
-                               is_best=is_best,
-                               checkpoint=model_dir)
+                               'optim_dict': optimizer.state_dict()},
+                              is_best=is_best,
+                              checkpoint=model_dir)
 
         # If best_eval, best_save_path
         if is_best:
@@ -164,20 +175,17 @@ if __name__ == '__main__':
 
     # Load the parameters from json file
     args = parser.parse_args()
-    #json_path = os.path.join(args.model_dir, 'params.json')
-    #assert os.path.isfile(json_path), "No json configuration file found at {}".format(json_path)
-    #params = utils.Params(json_path)
-
 
     # Set the random seed for reproducible experiments
     # See Pytorch Documentation for setting random seeds.
     torch.manual_seed(0)
-    torch.backends.cudnn.deterministic=True
-    torch.backends.cudnn.benchmark=False
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
     np.random.seed(0)
 
     # use GPU if available
-    if torch.cuda.is_available(): torch.cuda.manual_seed(230)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(230)
 
     cfg = get_cfg_defaults()
     cfg.freeze()
@@ -189,10 +197,9 @@ if __name__ == '__main__':
     logging.info("Loading the datasets...")
 
     # fetch dataloaders
-    dataloaders = data_loader.fetch_dataloader(['train', 'val', 'test'], args.gcs_bucket_name, args.data_dir, args.csv_filename, cfg)
+    dataloaders = data_loader.fetch_dataloader(['train', 'val'], args.data_dir, args.csv_filename, cfg)
     train_dl = dataloaders['train']
     val_dl = dataloaders['val']
-    test_dl = dataloaders['test']
 
     logging.info("- done.")
 
