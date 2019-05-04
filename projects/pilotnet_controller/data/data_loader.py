@@ -12,15 +12,13 @@ from io import BytesIO
 from PIL import Image
 from google.cloud import storage
 
-from .transforms import basenet_transforms 
-
+from .transforms import basenet_transforms
 
 
 class ControllerDataset(Dataset):
-    
-    def __init__(self, cfg, bucket_name, split, datasets, transform, throttle_include=False):
+
+    def __init__(self, cfg, split, datasets, transform, throttle_include=False):
         self.cfg = cfg
-        self.bucket_name = bucket_name
         self.data_csv = datasets[split]
         self.features = self.data_csv['url']
         self.target = self.data_csv[['throttle', 'steer']]
@@ -33,16 +31,15 @@ class ControllerDataset(Dataset):
         self.debug = cfg.MODEL.DEBUG
         self.cwd = os.path.dirname(os.path.abspath(__file__))
 
-
     def __len__(self):
         return len(self.features)
-        
+
     def __getitem__(self, idx):
         # Target is a array consisting of [throttle, steer]
         target = self.target.iloc[idx].values.tolist()
 
         image = self._get_image(self.features.iloc[idx])
-        
+
         if self.augment:
             if random.choice([True, False]):
                 image = image[:, ::-1, :]
@@ -50,22 +47,21 @@ class ControllerDataset(Dataset):
 
                 # Add some noise to the steering.
                 target[1] += np.random.normal(loc=0, scale=self.cfg.STEER.AUGMENTATION_SIGMA)
-            
+
                 # Clip between -1, 1
-                target[1] = np.clip(target[1],-1.0,1.0)
-       
-       
+                target[1] = np.clip(target[1], -1.0, 1.0)
+
         # If DO_AUGMENTATION is true, jitter will be applied to images, else just a resize
         # will be applied.
         image = self.transform(Image.fromarray(image))
 
         if self.debug:
             save_image(image, os.path.join(self.cwd, "train-images/image+{}.png".format(idx)))
-    
+
         # Train on both throttle, steer or just steer
         target = target if self.throttle_include else np.array([target[1]])
         target = torch.FloatTensor(target)
-    
+
         return image, target
 
     def _get_image(self, gs_path):
@@ -77,9 +73,9 @@ class ControllerDataset(Dataset):
         # crop image (remove useless information)
         cropped = image[range(*self.cfg.IMAGE.CROP_HEIGHT), :, :]
         return cropped
-        
 
-def fetch_dataloader(types, bucket_name, data_dir, csv_filename, cfg):
+
+def fetch_dataloader(types, data_dir, csv_filename, cfg):
     """
     Fetches the DataLoader object for each type in types from data_dir.
 
@@ -115,20 +111,20 @@ def fetch_dataloader(types, bucket_name, data_dir, csv_filename, cfg):
         'test': data_test}
 
     transforms = basenet_transforms(cfg)
-    train_transformer =  transforms["train_transformer"]
-    eval_transformer =  transforms["eval_transformer"]
+    train_transformer = transforms["train_transformer"]
+    eval_transformer = transforms["eval_transformer"]
 
     for split in ['train', 'val', 'test']:
         if split in types:
             # use the train_transformer if training data, else use eval_transformer without random flip
             if split == 'train':
-                dl = DataLoader(ControllerDataset(cfg, bucket_name, split, datasets, train_transformer),
+                dl = DataLoader(ControllerDataset(cfg, split, datasets, train_transformer),
                                 batch_size=cfg.INPUT.BATCH_SIZE,
                                 shuffle=cfg.DATASETS.SHUFFLE,
                                 num_workers=cfg.DATALOADER.NUM_WORKERS,
                                 pin_memory=cfg.DATALOADER.PIN_MEMORY)
             else:
-                dl = DataLoader(ControllerDataset(cfg, bucket_name, split, datasets, eval_transformer),
+                dl = DataLoader(ControllerDataset(cfg, split, datasets, eval_transformer),
                                 batch_size=cfg.INPUT.BATCH_SIZE,
                                 shuffle=cfg.DATASETS.SHUFFLE,
                                 num_workers=cfg.DATALOADER.NUM_WORKERS,
