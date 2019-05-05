@@ -60,7 +60,6 @@ def evaluate(model, loss_fn, dataloader, metrics, cfg, test=False):
         output_batch = output_batch.data.cpu().numpy()
         targets_batch = targets_batch.data.cpu().numpy()
 
-
         # construct for visualization in test evaluation
         outputs = np.append(outputs, output_batch)
         targets = np.append(targets, targets_batch)
