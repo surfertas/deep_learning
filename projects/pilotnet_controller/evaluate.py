@@ -13,15 +13,17 @@ import data.data_loader as data_loader
 from model import build_model, build_backward_model
 from config import get_cfg_defaults
 
+import matplotlib.pyplot as plt
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_dir', default='data/gcs', help="Directory containing the dataset")
-parser.add_argument('--csv_filename', default='path_to_data_balanced.csv')
+parser.add_argument('--csv_filename', default='path_to_data2059.csv')
 parser.add_argument('--model_dir', default='experiments/base_model', help="Directory containing params.json")
 parser.add_argument('--restore_file', default='best', help="name of the file in --model_dir \
                      containing weights to load")
 
 
-def evaluate(model, loss_fn, dataloader, metrics, cfg):
+def evaluate(model, loss_fn, dataloader, metrics, cfg, test=False):
     """Evaluate the model on `num_steps` batches.
 
     Args:
@@ -39,6 +41,8 @@ def evaluate(model, loss_fn, dataloader, metrics, cfg):
     # summary for current eval loop
     summ = []
 
+    outputs = np.array([])
+    targets = np.array([])
     # compute metrics over the dataset
     for data_batch, targets_batch in dataloader:
 
@@ -56,14 +60,23 @@ def evaluate(model, loss_fn, dataloader, metrics, cfg):
         output_batch = output_batch.data.cpu().numpy()
         targets_batch = targets_batch.data.cpu().numpy()
 
+
+        # construct for visualization in test evaluation
+        outputs = np.append(outputs, output_batch)
+        targets = np.append(targets, targets_batch)
+
         # compute all metrics on this batch
         summary_batch = {metric: metrics[metric](output_batch, targets_batch)
                          for metric in metrics}
         summary_batch['loss'] = loss.data.item()
         summ.append(summary_batch)
 
-    # compute mean of all metrics in summary
+    if test:
+        plt.plot(outputs)
+        plt.plot(targets)
+        plt.savefig('steering')
 
+    # compute mean of all metrics in summary
     metrics_mean = {metric: np.mean([x[metric] for x in summ]) for metric in summ[0]}
     metrics_string = " ; ".join("{}: {:05.3f}".format(k, v) for k, v in metrics_mean.items())
     logging.info("- Eval metrics : " + metrics_string)
@@ -115,6 +128,6 @@ if __name__ == '__main__':
     utils.load_checkpoint(os.path.join(args.model_dir, args.restore_file + '.pth.tar'), model)
 
     # Evaluate
-    test_metrics = evaluate(model, loss_fn, test_dl, metrics, cfg)
+    test_metrics = evaluate(model, loss_fn, test_dl, metrics, cfg, test=True)
     save_path = os.path.join(args.model_dir, "metrics_test_{}.json".format(args.restore_file))
     utils.save_dict_to_json(test_metrics, save_path)
