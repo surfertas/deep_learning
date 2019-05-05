@@ -89,47 +89,47 @@ def fetch_dataloader(types, data_dir, csv_filename, cfg):
     """
     dataloaders = {}
     data_csv = pd.read_csv(os.path.join(data_dir, csv_filename))
-    n_samples = len(data_csv)
 
-    # NOTE: dont use random sampling, as dealing with sequences. Think about later.
-    # Split into train and test
-    n_train = int(n_samples * cfg.DATALOADER.TRAIN)
-    data_train = data_csv[:n_train]
-    data_test = data_csv[n_train:]
+    if 'test' not in types:
+        # NOTE: dont use random sampling, as dealing with sequences. Think about later.
+        # Split into train and eval
+        n_samples = len(data_csv)
+        n_train = int(n_samples * cfg.DATALOADER.TRAIN)
+        data_train = data_csv[:n_train]
+        data_eval = data_csv[n_train:]
 
-    # Split into train and eval
-    n_train_eval = int(n_train * (1 - cfg.DATALOADER.VAL))
-    data_train_new = data_train[:n_train_eval]
-    data_eval = data_train[n_train_eval:]
-    print("size of data train set: {}".format(len(data_train_new)))
-    print("size of data val set: {}".format(len(data_eval)))
-    print("size of data test set: {}".format(len(data_test)))
+        # Split into train and eval
+        datasets = {
+            'train': data_train,
+            'val': data_eval}
+        print("size of data train set: {}".format(len(data_train)))
+        print("size of data val set: {}".format(len(data_eval)))
+    else:
+        datasets = {
+            'test': data_csv}
+        print("size of data test set: {}".format(len(data_csv)))
 
-    datasets = {
-        'train': data_train_new,
-        'val': data_eval,
-        'test': data_test}
-
+    # Set up transformers.
     transforms = basenet_transforms(cfg)
     train_transformer = transforms["train_transformer"]
     eval_transformer = transforms["eval_transformer"]
 
-    for split in ['train', 'val', 'test']:
-        if split in types:
-            # use the train_transformer if training data, else use eval_transformer without random flip
-            if split == 'train':
-                dl = DataLoader(ControllerDataset(cfg, split, datasets, train_transformer),
-                                batch_size=cfg.INPUT.BATCH_SIZE,
-                                shuffle=cfg.DATASETS.SHUFFLE,
-                                num_workers=cfg.DATALOADER.NUM_WORKERS,
-                                pin_memory=cfg.DATALOADER.PIN_MEMORY)
-            else:
-                dl = DataLoader(ControllerDataset(cfg, split, datasets, eval_transformer),
-                                batch_size=cfg.INPUT.BATCH_SIZE,
-                                shuffle=cfg.DATASETS.SHUFFLE,
-                                num_workers=cfg.DATALOADER.NUM_WORKERS,
-                                pin_memory=cfg.DATALOADER.PIN_MEMORY)
+    # Create datasets.
+    for split in types:
+        # use the train_transformer if training data, else use eval_transformer without random flip
+        if split == 'train':
+            dl = DataLoader(ControllerDataset(cfg, split, datasets, train_transformer),
+                            batch_size=cfg.INPUT.BATCH_SIZE,
+                            shuffle=cfg.DATASETS.SHUFFLE,
+                            num_workers=cfg.DATALOADER.NUM_WORKERS,
+                            pin_memory=cfg.DATALOADER.PIN_MEMORY)
+        else:
+            dl = DataLoader(ControllerDataset(cfg, split, datasets, eval_transformer),
+                            batch_size=cfg.INPUT.BATCH_SIZE,
+                            shuffle=False,
+                            num_workers=cfg.DATALOADER.NUM_WORKERS,
+                            pin_memory=cfg.DATALOADER.PIN_MEMORY)
 
-            dataloaders[split] = dl
+        dataloaders[split] = dl
 
     return dataloaders
