@@ -14,7 +14,7 @@ _C.MODEL.META_ARCHITECTURE = 'PilotNet'
 _C.MODEL.BACKWARD_META_ARCHITECTURE = 'BackwardPilotNet'
 _C.MODEL.DEVICE = "cuda"
 _C.MODEL.WEIGHTS = "./weights_final.pth"  # should be a path to pth or ckpt file
-
+_C.MODEL.DEBUG = False
 # ---------------------------------------------------------------------------- #
 # __CNN Configs
 # ---------------------------------------------------------------------------- #
@@ -34,7 +34,7 @@ _C.MODEL.CNN.DROPOUT = 0.2
 _C.MODEL.FC = CN()
 _C.MODEL.FC.INPUT = 2304
 _C.MODEL.FC.LAYERS = [             # Adhere to [out_channels, (kernel_h, kernel_w), stride]
-    {'to_size': 100, 'dropout': .5, 'norm': False},
+#    {'to_size': 100, 'dropout': .5, 'norm': False},
     {'to_size': 50, 'dropout': .5, 'norm': False},
     {'to_size': 10, 'dropout': .0, 'norm': False},
 ]
@@ -56,7 +56,7 @@ _C.MODEL.BACKWARD_CNN.LAYERS = [     # Adhere to [out_channels, (kernel_h, kerne
 # Input Pipeline Configs
 # ---------------------------------------------------------------------------- #
 _C.INPUT = CN()
-_C.INPUT.BATCH_SIZE = 256
+_C.INPUT.BATCH_SIZE = 128
 
 # ---------------------------------------------------------------------------- #
 # Datasets
@@ -75,7 +75,7 @@ _C.DATASETS.SHUFFLE = True                                  # load in shuffle fa
 _C.IMAGE = CN()
 _C.IMAGE.TARGET_HEIGHT = 70
 _C.IMAGE.TARGET_WIDTH = 200
-_C.IMAGE.CROP_HEIGHT = [70, 256]
+_C.IMAGE.CROP_HEIGHT = [70, 240]
 _C.IMAGE.DO_AUGMENTATION = True
 _C.IMAGE.AUGMENTATION_BRIGHTNESS_MIN = 0.2
 _C.IMAGE.AUGMENTATION_BRIGHTNESS_MAX = 1.5
