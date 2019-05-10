@@ -7,6 +7,7 @@ import os
 import numpy as np
 import torch
 from torch.autograd import Variable
+from torchvision.utils import save_image
 import utils
 import model.all_metrics as all_metrics
 import data.data_loader as data_loader
@@ -17,7 +18,7 @@ import matplotlib.pyplot as plt
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_dir', default='data/gcs', help="Directory containing the dataset")
-parser.add_argument('--csv_filename', default='path_to_data2059.csv')
+parser.add_argument('--csv_filename', default='path_to_data_visualize.csv')
 parser.add_argument('--model_dir', default='experiments/base_model', help="Directory containing params.json")
 parser.add_argument('--restore_file', default='best', help="name of the file in --model_dir \
                      containing weights to load")
@@ -52,12 +53,12 @@ def visualize(model, backward_model, dataloader, cfg):
         # extract data from torch Variable, move to cpu, convert to numpy arrays
         output_batch = output_batch.data.cpu().numpy()
         targets_batch = targets_batch.data.cpu().numpy()
-        backward_segmentations = backward_segmentations.cpu().numpy()
+        backward_segmentations = backward_segmentations.cpu()
         indices = indices.cpu()
 
         for i in indices:
             image_mask = backward_segmentations[i, :, :, :]
-            path = cfg.OUTPUT.VIS_DIR + "/" + count
+            path = cfg.OUTPUT.VIS_DIR + "/" + str(count)
             save_image(image_mask, path + '_backward_segmentation.jpg')
             count += 1
 
@@ -88,11 +89,9 @@ if __name__ == '__main__':
 
     # Create the input data pipeline
     logging.info("Creating the dataset...")
-
     # fetch dataloaders
     dataloaders = data_loader.fetch_dataloader(['test'], args.data_dir, args.csv_filename, cfg)
     test_dl = dataloaders['test']
-
     logging.info("- done.")
 
     # Define the model
@@ -108,6 +107,9 @@ if __name__ == '__main__':
 
     # Reload weights from the saved file
     utils.load_checkpoint(os.path.join(args.model_dir, args.restore_file + '.pth.tar'), model)
+
+    if os.path.isdir(cfg.OUTPUT.VIS_DIR) is False:
+        os.makedirs(cfg.OUTPUT.VIS_DIR)
 
     # visualize
     visualize(model, backward_model, test_dl, cfg)
