@@ -37,9 +37,12 @@ class PilotNet(nn.Module):
 
     def forward(self, input, targets=None):
         batch_size = input.size(0)
-        normalized_input = input / 127.5 - 1
+        # if image pixel range is 0-255 use 127.5 as opposed to 0.5
+        assert(input.max() <= 1.0)
+        normalized_input = input / 0.5 - 1
         cnn_features = self.cnn_backbone(normalized_input)
         flattened_features = cnn_features.view([batch_size, -1])
+        #print(flattened_features.size())
         predictions = self.feed_forward(flattened_features)
 
         if self.visualizing:
