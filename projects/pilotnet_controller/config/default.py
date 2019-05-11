@@ -32,9 +32,9 @@ _C.MODEL.CNN.DROPOUT = 0.2
 # __Fully Connected Output Layer
 # ---------------------------------------------------------------------------- #
 _C.MODEL.FC = CN()
-_C.MODEL.FC.INPUT = 2304
+_C.MODEL.FC.INPUT = 1152
 _C.MODEL.FC.LAYERS = [             # Adhere to [out_channels, (kernel_h, kernel_w), stride]
-    {'to_size': 100, 'dropout': .5, 'norm': False},
+#    {'to_size': 100, 'dropout': .5, 'norm': False},
     {'to_size': 50, 'dropout': .5, 'norm': False},
     {'to_size': 10, 'dropout': .0, 'norm': False},
 ]
@@ -73,10 +73,10 @@ _C.DATASETS.SHUFFLE = True                                  # load in shuffle fa
 # Image and Steer parameters
 # ---------------------------------------------------------------------------- #
 _C.IMAGE = CN()
-_C.IMAGE.TARGET_HEIGHT = 70
+_C.IMAGE.TARGET_HEIGHT = 66
 _C.IMAGE.TARGET_WIDTH = 200
-_C.IMAGE.CROP_HEIGHT = [70, 240]
-_C.IMAGE.DO_AUGMENTATION = False
+_C.IMAGE.CROP_HEIGHT = [66, 240]
+_C.IMAGE.DO_AUGMENTATION = True
 _C.IMAGE.AUGMENTATION_BRIGHTNESS_MIN = 0.2
 _C.IMAGE.AUGMENTATION_BRIGHTNESS_MAX = 1.5
 _C.IMAGE.AUGMENTATION_DELTA_CORRECTION = 15.
@@ -101,7 +101,7 @@ _C.DATALOADER.TEST = 0.1   # % test
 # Solver Configs
 # ---------------------------------------------------------------------------- #
 _C.SOLVER = CN()
-_C.SOLVER.EPOCHS = 3
+_C.SOLVER.EPOCHS = 30
 
 _C.SOLVER.BASE_LR = 0.0001
 _C.SOLVER.BIAS_LR_FACTOR = 2
