@@ -36,13 +36,19 @@ class BackwardPilotNet(nn.Module):
         for back_op, activation in zip(self.backward_layers, reversed(activations)):
             summation = back_op(torch.mul(last_activation, activation))
             last_activation = summation
-            last_activation = self.normalization(last_activation)
+        last_activation = self.normalization(last_activation)
+        print(torch.max(last_activation), torch.min(last_activation))
+
         return last_activation
 
     @staticmethod
     def normalization(tensor):
+        print(tensor.size())
+        print(torch.max(tensor), torch.min(tensor))
+
         omin = tensor.min(2, keepdim=True)[0].min(3, keepdim=True)[0].mul(-1)
         omax = tensor.max(2, keepdim=True)[0].max(3, keepdim=True)[0].add(omin)
         tensor = torch.add(tensor, omin.expand(tensor.size(0), tensor.size(1), tensor.size(2), tensor.size(3)))
         tensor = torch.div(tensor, omax.expand(tensor.size(0), tensor.size(1), tensor.size(2), tensor.size(3)))
+        print(torch.max(tensor), torch.min(tensor))
         return tensor
