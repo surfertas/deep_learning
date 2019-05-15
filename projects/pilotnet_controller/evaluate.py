@@ -59,7 +59,6 @@ def evaluate(model, loss_fn, dataloader, metrics, cfg, test=False):
         # extract data from torch Variable, move to cpu, convert to numpy arrays
         output_batch = output_batch.data.cpu().numpy()
         targets_batch = targets_batch.data.cpu().numpy()
-
         # construct for visualization in test evaluation
         outputs = np.append(outputs, output_batch)
         targets = np.append(targets, targets_batch)
@@ -71,8 +70,8 @@ def evaluate(model, loss_fn, dataloader, metrics, cfg, test=False):
         summ.append(summary_batch)
 
     if test:
+        #plt.plot(targets)
         plt.plot(outputs)
-        plt.plot(targets)
         plt.savefig('steering')
 
     # compute mean of all metrics in summary
