@@ -29,6 +29,8 @@ python base_case_rmse.py --csv_path
 ```
 
 ## Acknowledgement
+1. [cs230-code-examples](https://github.com/cs230-stanford/cs230-code-examples/tree/master/tensorflow/vision)
+2. [end2end-self-driving-car](https://github.com/MahanFathi/end2end-self-driving-car)
 
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)
