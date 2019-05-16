@@ -9,13 +9,14 @@ import pandas as pd
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--data-dir', default='./data/gcs',
-        help="Directory with gcs.csv")
+                    help="Directory with gcs.csv")
 parser.add_argument('--filename', default='gcs3926.csv',
-        help="Name of csv file")
+                    help="Name of csv file")
 parser.add_argument('--image-dir', default='/home/tasuku/data/track-v0-night/1557924016413533926',
-        help="Directory with gcs.csv")
+                    help="Directory with gcs.csv")
 parser.add_argument('--percentage_to_use', default=1.0,
-        help="Percentage of dataset to use")
+                    help="Percentage of dataset to use")
+
 
 def generate_csv_with_paths(data_dir: str, filename: str, image_dir: str, percentage_to_use: float):
     """ Generate a csv file with path to images stored locally and
@@ -25,9 +26,9 @@ def generate_csv_with_paths(data_dir: str, filename: str, image_dir: str, percen
             filename: file name of the csv file
             percentage_to_use: percentage of the samples to use
     """
-    filename = os.path.join(data_dir, filename)    
+    filename = os.path.join(data_dir, filename)
     df = pd.read_csv(filename, header=None)
-    
+
     # Path to pickle file should be last in file in dataframe
     pickle_file_path = df.tail(1).iloc[0].values[0]
     assert pickle_file_path.split('.')[-1] == 'pickle'
@@ -51,16 +52,16 @@ def generate_csv_with_paths(data_dir: str, filename: str, image_dir: str, percen
 
     df_sample['key'] = df_sample['image'].apply(lambda x: x.decode("utf-8").split('/')[-1])
     df_sample = df_sample.set_index('key').drop(columns=['image'])
-    
+
     # Join on image key. Use inner join as the number of examples collected wont
     # necessarily match the examples pickled as a result of the frequency at
     # which examples are stored.
     df_final = df_images_path[:n_use].join(df_sample, how='inner')
-    
-    print("Saving path_to_data.csv")
-    df_final.to_csv(os.path.join(data_dir,'path_to_data.csv'))
 
-if __name__=="__main__":
+    print("Saving path_to_data.csv")
+    df_final.to_csv(os.path.join(data_dir, 'path_to_data.csv'))
+
+
+if __name__ == "__main__":
     args = parser.parse_args()
     generate_csv_with_paths(args.data_dir, args.filename, args.image_dir, args.percentage_to_use)
-   
