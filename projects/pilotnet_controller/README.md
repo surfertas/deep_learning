@@ -2,7 +2,8 @@
 
 A PyTorch research environment for training PilotNet to predict control (steering) for a RC car. 
 
-Image features and controller targets are collected using a RC car(Donkey) running the [amr_core]() software.
+Image features and controller targets are collected using a RC car(Donkey)
+running the [amr_core](https://github.com/surfertas/amr_core) software.
 
 The data stored on the SSD is transferred to storage on Google Storage, and then transfered to an GCP instance with a GPU.
 
