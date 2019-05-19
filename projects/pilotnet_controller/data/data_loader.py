@@ -9,7 +9,7 @@ from torchvision.utils import save_image
 from torch.utils.data import Dataset, DataLoader, ConcatDataset
 
 from io import BytesIO
-from PIL import Image
+from PIL import Image, ImageChops
 from google.cloud import storage
 
 from .transforms import basenet_transforms
@@ -83,21 +83,31 @@ class ControllerDataset(Dataset):
 
 class GrayScaleDifferenceDataset(ControllerDataset):
 
-    def __init__(self, cfg, split, datasets, transform, throttle_include=False):
+    def __init__(self, cfg, split, datasets, transform, n_steps=1, throttle_include=False):
         super().__init__(cfg, split, datasets, transform, throttle_include)
 
+        self.n_steps = n_steps
         self.prev_frame = np.zeros_like(self._get_image(self.features.iloc[0]).shape)
+        #self.frames = np.array([self.prev_frame] * n_steps)
 
     def __getitem__(self, idx):
         target = self.target.iloc[idx].values.tolist()
 
         image = self._get_image(self.features.iloc[idx])
 
+        # If n_step = 0 just use the gray frame image otherwise take the n_step difference
+        if self.n_steps != 0:
+            prev = self.prev_frame
+            image_diff = ImageChops.subtract(image, self.prev_frame)
+            self.prev_frame = image
+
+
+
         if self.augment:
             if random.choice([True, False]):
-                image = image[:, ::-1]
-#                im = Image.fromarray(image)
-#                im.save(f'flipped+{idx}.png')
+                image_diff = image_diff[:, ::-1]
+                im = Image.fromarray(image_diff)
+                im.save(f'flipped+{idx}.png')
 
                 target[1] *= -1.
 
@@ -109,16 +119,16 @@ class GrayScaleDifferenceDataset(ControllerDataset):
 
         # If DO_AUGMENTATION is true, jitter will be applied to images, else just a resize
         # will be applied.
-        image = self.transform(Image.fromarray(image))
+        image_diff = self.transform(Image.fromarray(image_diff))
 
         if self.debug:
-            save_image(image, os.path.join(self.cwd, f'train-images/image+{idx}.png'))
+            save_image(image_diff, os.path.join(self.cwd, f'train-images/image+{idx}.png'))
 
         # Train on both throttle, steer or just steer
         target = target if self.throttle_include else np.array([target[1]])
         target = torch.FloatTensor(target)
 
-        return image, target
+        return image_diff, target
 
 
 def fetch_dataloader(types, data_dir, csv_filename, cfg):
