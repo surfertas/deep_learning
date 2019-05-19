@@ -15,43 +15,6 @@ from google.cloud import storage
 from .transforms import basenet_transforms
 
 
-class GrayScaleDifferenceDataset(ControllerDataset):
-
-    def __init__(self, cfg, split, datasets, transform, throttle_include):
-        super().init(cfg, split, datasets, transform, throttle_include)
-
-        self.prev_frame = np.zeros_like(self.features.iloc[0].shape)
-
-    def __getitem__(self, idx):
-        target = self.target.iloc[idx].values.tolist()
-
-        image = self._get_image(self.features.iloc[idx], True)
-
-        if self.augment:
-            if random.choice([True, False]):
-                image = image[:, ::-1, :]
-                target[1] *= -1.
-
-                # Add some noise to the steering.
-                target[1] += np.random.normal(loc=0, scale=self.cfg.STEER.AUGMENTATION_SIGMA)
-
-                # Clip between -1, 1
-                target[1] = np.clip(target[1], -1.0, 1.0)
-
-        # If DO_AUGMENTATION is true, jitter will be applied to images, else just a resize
-        # will be applied.
-        image = self.transform(Image.fromarray(image))
-
-        if self.debug:
-            save_image(image, os.path.join(self.cwd, "train-images/image+{}.png".format(idx)))
-
-        # Train on both throttle, steer or just steer
-        target = target if self.throttle_include else np.array([target[1]])
-        target = torch.FloatTensor(target)
-
-        return image, target
-
-
 class ControllerDataset(Dataset):
 
     def __init__(self, cfg, split, datasets, transform, throttle_include=False):
@@ -61,11 +24,15 @@ class ControllerDataset(Dataset):
         self.target = self.data_csv[['throttle', 'steer']]
 
         self.n_samples = len(self.target)
-        self.augment = self.cfg.IMAGE.DO_AUGMENTATION
         self.transform = transform
         self.throttle_include = throttle_include
 
-        self.debug = cfg.MODEL.DEBUG
+        self.debug = self.cfg.MODEL.DEBUG
+        self.augment = self.cfg.IMAGE.DO_AUGMENTATION
+        self.gray = (self.cfg.MODEL.CNN.INPUT_CHANNELS == 1)
+        self.sigma = self.cfg.STEER.AUGMENTATION_SIGMA
+        self.crop_height = self.cfg.IMAGE.CROP_HEIGHT
+
         self.cwd = os.path.dirname(os.path.abspath(__file__))
 
     def __len__(self):
@@ -80,10 +47,11 @@ class ControllerDataset(Dataset):
         if self.augment:
             if random.choice([True, False]):
                 image = image[:, ::-1, :]
+
                 target[1] *= -1.
 
                 # Add some noise to the steering.
-                target[1] += np.random.normal(loc=0, scale=self.cfg.STEER.AUGMENTATION_SIGMA)
+                target[1] += np.random.normal(loc=0, scale=self.sigma)
 
                 # Clip between -1, 1
                 target[1] = np.clip(target[1], -1.0, 1.0)
@@ -93,7 +61,7 @@ class ControllerDataset(Dataset):
         image = self.transform(Image.fromarray(image))
 
         if self.debug:
-            save_image(image, os.path.join(self.cwd, "train-images/image+{}.png".format(idx)))
+            save_image(image, os.path.join(self.cwd, f'train-images/image+{idx}.png'))
 
         # Train on both throttle, steer or just steer
         target = target if self.throttle_include else np.array([target[1]])
@@ -101,16 +69,56 @@ class ControllerDataset(Dataset):
 
         return image, target
 
-    def _get_image(self, path, gray=False):
-        image = Image.open(path).convert('LA') if gray else Image.open(path)
+    def _get_image(self, path):
+        image = Image.open(path).convert('L') if self.gray else Image.open(path)
         image = np.array(image)
         image = self._preprocess(image)
         return image
 
     def _preprocess(self, image):
         # crop image (remove useless information)
-        cropped = image[range(*self.cfg.IMAGE.CROP_HEIGHT), :, :]
+        cropped = image[range(*self.crop_height)] if self.gray else image[range(*self.crop_height), :, :]
         return cropped
+
+
+class GrayScaleDifferenceDataset(ControllerDataset):
+
+    def __init__(self, cfg, split, datasets, transform, throttle_include=False):
+        super().__init__(cfg, split, datasets, transform, throttle_include)
+
+        self.prev_frame = np.zeros_like(self._get_image(self.features.iloc[0]).shape)
+
+    def __getitem__(self, idx):
+        target = self.target.iloc[idx].values.tolist()
+
+        image = self._get_image(self.features.iloc[idx])
+
+        if self.augment:
+            if random.choice([True, False]):
+                image = image[:, ::-1]
+#                im = Image.fromarray(image)
+#                im.save(f'flipped+{idx}.png')
+
+                target[1] *= -1.
+
+                # Add some noise to the steering.
+                target[1] += np.random.normal(loc=0, scale=self.sigma)
+
+                # Clip between -1, 1
+                target[1] = np.clip(target[1], -1.0, 1.0)
+
+        # If DO_AUGMENTATION is true, jitter will be applied to images, else just a resize
+        # will be applied.
+        image = self.transform(Image.fromarray(image))
+
+        if self.debug:
+            save_image(image, os.path.join(self.cwd, f'train-images/image+{idx}.png'))
+
+        # Train on both throttle, steer or just steer
+        target = target if self.throttle_include else np.array([target[1]])
+        target = torch.FloatTensor(target)
+
+        return image, target
 
 
 def fetch_dataloader(types, data_dir, csv_filename, cfg):
