@@ -87,7 +87,7 @@ class GrayScaleDifferenceDataset(ControllerDataset):
         super().__init__(cfg, split, datasets, transform, throttle_include)
 
         self.n_steps = n_steps
-        self.prev_frame = np.zeros_like(self._get_image(self.features.iloc[0]).shape)
+        self.prev_frame = np.zeros_like(self._get_image(self.features.iloc[0]))
         #self.frames = np.array([self.prev_frame] * n_steps)
 
     def __getitem__(self, idx):
@@ -97,8 +97,12 @@ class GrayScaleDifferenceDataset(ControllerDataset):
 
         # If n_step = 0 just use the gray frame image otherwise take the n_step difference
         if self.n_steps != 0:
-            prev = self.prev_frame
-            image_diff = ImageChops.subtract(image, self.prev_frame)
+            print(type(image))
+            print(type(self.prev_frame))
+            print(image.shape)
+            print(self.prev_frame.shape)
+ 
+            image_diff = np.array(ImageChops.subtract(Image.fromarray(image), Image.fromarray(self.prev_frame)))
             self.prev_frame = image
 
 
@@ -174,13 +178,13 @@ def fetch_dataloader(types, data_dir, csv_filename, cfg):
     for split in types:
         # use the train_transformer if training data, else use eval_transformer without random flip
         if split == 'train':
-            dl = DataLoader(ControllerDataset(cfg, split, datasets, train_transformer),
+            dl = DataLoader(GrayScaleDifferenceDataset(cfg, split, datasets, train_transformer),
                             batch_size=cfg.INPUT.BATCH_SIZE,
                             shuffle=cfg.DATASETS.SHUFFLE,
                             num_workers=cfg.DATALOADER.NUM_WORKERS,
                             pin_memory=cfg.DATALOADER.PIN_MEMORY)
         else:
-            dl = DataLoader(ControllerDataset(cfg, split, datasets, eval_transformer),
+            dl = DataLoader(GrayScaleDifferenceDataset(cfg, split, datasets, eval_transformer),
                             batch_size=cfg.INPUT.BATCH_SIZE,
                             shuffle=False,
                             num_workers=cfg.DATALOADER.NUM_WORKERS,
