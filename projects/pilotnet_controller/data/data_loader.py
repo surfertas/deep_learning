@@ -101,7 +101,7 @@ class GrayScaleDifferenceDataset(ControllerDataset):
             print(type(self.prev_frame))
             print(image.shape)
             print(self.prev_frame.shape)
- 
+
             image_diff = np.array(ImageChops.subtract(Image.fromarray(image), Image.fromarray(self.prev_frame)))
             self.prev_frame = image
 
@@ -177,10 +177,11 @@ def fetch_dataloader(types, data_dir, csv_filename, cfg):
     # Create datasets.
     for split in types:
         # use the train_transformer if training data, else use eval_transformer without random flip
+        # if using grayscale difference, set shuffle to False
         if split == 'train':
             dl = DataLoader(GrayScaleDifferenceDataset(cfg, split, datasets, train_transformer),
                             batch_size=cfg.INPUT.BATCH_SIZE,
-                            shuffle=cfg.DATASETS.SHUFFLE,
+                            shuffle=False,
                             num_workers=cfg.DATALOADER.NUM_WORKERS,
                             pin_memory=cfg.DATALOADER.PIN_MEMORY)
         else:
