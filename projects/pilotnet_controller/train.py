@@ -16,11 +16,11 @@ import data.data_loader as data_loader
 import model.all_metrics as all_metrics
 from model import build_model, build_backward_model
 from evaluate import evaluate
-from config import get_cfg_defaults
+from config import get_cfg_defaults, get_cfg_gray_diff
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_dir', default='data/gcs', help="Directory containing the csv file")
-parser.add_argument('--csv_filename', default='path_to_data_balanced.csv')
+parser.add_argument('--csv_filename', default='path_to_sampled.csv')
 parser.add_argument('--model_dir', default='experiments/base_model', help="Directory containing params.json")
 parser.add_argument('--restore_file', default=None,
                     help="Optional, name of the file in --model_dir containing weights to reload before \
@@ -187,7 +187,9 @@ if __name__ == '__main__':
     if torch.cuda.is_available():
         torch.cuda.manual_seed(230)
 
-    cfg = get_cfg_defaults()
+    cfg = get_cfg_gray_diff()
+#    cfg = get_cfg_defaults()
+
     cfg.freeze()
 
     # Set the logger

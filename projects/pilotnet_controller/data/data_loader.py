@@ -67,11 +67,15 @@ class ControllerDataset(Dataset):
         target = target if self.throttle_include else np.array([target[1]])
         target = torch.FloatTensor(target)
 
+        print(image[0])
         return image, target
 
     def _get_image(self, path):
-        image = Image.open(path).convert('L') if self.gray else Image.open(path)
-        image = np.array(image)
+        if self.gray:
+            image = np.array(Image.open(path).convert('L'))
+        else:
+            image = np.array(Image.open(path))
+
         image = self._preprocess(image)
         return image
 
@@ -97,21 +101,14 @@ class GrayScaleDifferenceDataset(ControllerDataset):
 
         # If n_step = 0 just use the gray frame image otherwise take the n_step difference
         if self.n_steps != 0:
-            print(type(image))
-            print(type(self.prev_frame))
-            print(image.shape)
-            print(self.prev_frame.shape)
-
             image_diff = np.array(ImageChops.subtract(Image.fromarray(image), Image.fromarray(self.prev_frame)))
             self.prev_frame = image
-
-
 
         if self.augment:
             if random.choice([True, False]):
                 image_diff = image_diff[:, ::-1]
-                im = Image.fromarray(image_diff)
-                im.save(f'flipped+{idx}.png')
+        #        im = Image.fromarray(image_diff)
+        #        im.save(f'flipped+{idx}.png')
 
                 target[1] *= -1.
 
@@ -123,6 +120,7 @@ class GrayScaleDifferenceDataset(ControllerDataset):
 
         # If DO_AUGMENTATION is true, jitter will be applied to images, else just a resize
         # will be applied.
+        # ToTensor() converts into 0-1 range.
         image_diff = self.transform(Image.fromarray(image_diff))
 
         if self.debug:
@@ -174,20 +172,25 @@ def fetch_dataloader(types, data_dir, csv_filename, cfg):
     train_transformer = transforms["train_transformer"]
     eval_transformer = transforms["eval_transformer"]
 
+    if (cfg.MODEL.CNN.INPUT_CHANNELS == 1):
+        UseDataset = GrayScaleDifferenceDataset
+    else:
+        UseDataset = ControllerDataset
+
     # Create datasets.
     for split in types:
         # use the train_transformer if training data, else use eval_transformer without random flip
         # if using grayscale difference, set shuffle to False
         if split == 'train':
-            dl = DataLoader(GrayScaleDifferenceDataset(cfg, split, datasets, train_transformer),
+            dl = DataLoader(UseDataset(cfg, split, datasets, train_transformer),
                             batch_size=cfg.INPUT.BATCH_SIZE,
-                            shuffle=False,
+                            shuffle=cfg.DATASETS.SHUFFLE,
                             num_workers=cfg.DATALOADER.NUM_WORKERS,
                             pin_memory=cfg.DATALOADER.PIN_MEMORY)
         else:
-            dl = DataLoader(GrayScaleDifferenceDataset(cfg, split, datasets, eval_transformer),
+            dl = DataLoader(UseDataset(cfg, split, datasets, eval_transformer),
                             batch_size=cfg.INPUT.BATCH_SIZE,
-                            shuffle=False,
+                            shuffle=cfg.DATASETS.SHUFFLE,
                             num_workers=cfg.DATALOADER.NUM_WORKERS,
                             pin_memory=cfg.DATALOADER.PIN_MEMORY)
 
