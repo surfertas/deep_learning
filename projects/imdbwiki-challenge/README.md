@@ -1,6 +1,10 @@
+<a href='https://www.korabo.io/checkout-page/5e2c4727d31a7a00290de877/5e23f0b31b70f70022ff5933'>
+    <img src='https://img.shields.io/badge/Korabo-donate-blue' alt='donate'>
+</a>
+
+
 ## Scripts related to processing of IMDB data and training of CNN model.
 ---
-
 
 data source:
 [https://data.vision.ee.ethz.ch/cvl/rrothe/imdb-wiki/](https://data.vision.ee.ethz.ch/cvl/rrothe/imdb-wiki/)
