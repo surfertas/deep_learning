@@ -1,7 +1,7 @@
 scipy==1.0.0
 torch==0.3.0.post4
 scikit_image==0.13.1
-numpy==1.11.0
+numpy==1.22.0
 pandas==0.21.0
 torchvision==0.2.0
 skimage==0.0
